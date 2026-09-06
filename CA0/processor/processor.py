@@ -62,7 +62,7 @@ consumer = KafkaConsumer(
     bootstrap_servers=KAFKA_BROKER,
     value_deserializer=lambda value: json.loads(value.decode("utf-8")),
     auto_offset_reset="earliest",
-    enable_auto_commit=True,
+    enable_auto_commit=False,
     group_id="ca0-threat-processor"
 )
 
@@ -79,7 +79,11 @@ for message in consumer:
 
         processed_event = classify_event(event)
 
+        # Store the processed event in MongoDB
         result = collection.insert_one(processed_event)
+
+        # Commit Kafka offset only after MongoDB write succeeds
+        consumer.commit()
 
         print(
             f"Stored event_id={processed_event.get('event_id')} "
