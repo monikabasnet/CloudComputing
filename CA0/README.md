@@ -1514,19 +1514,19 @@ Selected evidence can be embedded below after the final screenshot filenames hav
 ## AWS Infrastructure
 
 ```markdown
-![AWS EC2 Instances](screenshots/01-ec2-instances.png)
+![AWS EC2 Instances](/Users/monikabasnet/Downloads/CloudComputing/CA0/screenshots/EC2 Instances.png)
 ```
 
 ## Kafka
 
 ```markdown
-![Kafka Service](screenshots/02-kafka-running.png)
+![Kafka Service](/Users/monikabasnet/Downloads/CloudComputing/CA0/screenshots/systemctl status kafka.png)
 ```
 
 ## Non-Root Container
 
 ```markdown
-![Non-Root Container](screenshots/03-non-root-container.png)
+![Non-Root Container](/Users/monikabasnet/Downloads/CloudComputing/CA0/screenshots/Nonroot Container.png)
 ```
 
 ## Producer
@@ -1544,7 +1544,7 @@ Selected evidence can be embedded below after the final screenshot filenames hav
 ## Brute-Force Detection
 
 ```markdown
-![Brute Force Detection](screenshots/06-brute-force-detection.png)
+![Brute Force Detection](/Users/monikabasnet/Downloads/CloudComputing/CA0/screenshots/Possible Brute Force.png)
 ```
 
 ## MongoDB
@@ -1556,7 +1556,7 @@ Selected evidence can be embedded below after the final screenshot filenames hav
 ## REST API
 
 ```markdown
-![REST API](screenshots/08-rest-api.png)
+![REST API](/Users/monikabasnet/Downloads/CloudComputing/CA0/screenshots/Get Alerts.png)
 ```
 
 ---
