@@ -1515,12 +1515,6 @@ Selected evidence can be embedded below after the final screenshot filenames hav
 
 Critical screenshots collected during deployment and validation are stored in the `CA0/screenshots/` directory.
 
-# Screenshots
-
-Critical screenshots collected during deployment and validation are stored in the `CA0/screenshots/` directory.
-
-# Screenshots
-
 ## AWS Infrastructure
 
 ![AWS EC2 Instances](CA0/screenshots/EC2%20Instances.png)
