@@ -1,1344 +1,2209 @@
-# CA0 – Manual IoT Pipeline Deployment on AWS
+# CA0 — Cloud-Based Authentication Threat Monitoring Pipeline
 
 ## Overview
 
-CA0 is a manually deployed end-to-end IoT data pipeline hosted on Amazon Web Services (AWS).
+This project implements a small distributed cybersecurity event-processing system on AWS.
 
-The purpose of this assignment is to provision and configure the infrastructure manually, deploy each required software component, connect the complete data pipeline, apply basic security controls, and verify successful data flow from the producer through the message broker and processor into the database.
+The system generates synthetic authentication events, publishes them through Apache Kafka, processes the events using a containerized Python application, detects repeated failed-login behavior, stores processed events in MongoDB, and exposes the stored results through a REST API.
 
-The planned pipeline is:
-
-```text
-Producer(s)
-     |
-     | publishes IoT messages
-     v
-Apache Kafka
-     |
-     | consumer reads messages
-     v
-Processor
-     |
-     | processes/transforms data
-     v
-MongoDB
-```
-
-A REST API is also exposed to provide access to stored pipeline data.
-
-The deployment is intentionally performed manually rather than using a higher-level orchestration platform so that the networking, service configuration, security controls, message flow, and dependencies between components can be understood and verified individually.
-
----
-
-# 1. Reference Software Stack
-
-The following reference stack is used for CA0 and is intended to serve as the baseline stack for subsequent course assignments.
-
-| Component                 | Technology                | Version                    |
-| ------------------------- | ------------------------- | -------------------------- |
-| Cloud Provider            | Amazon Web Services (AWS) | N/A                        |
-| Compute                   | Amazon EC2                | N/A                        |
-| Operating System          | Ubuntu 24.04 LTS          | `<verified version>`       |
-| Container Runtime         | Docker Engine             | `<verified version>`       |
-| Pub/Sub / Message Broker  | Apache Kafka              | `<verified version>`       |
-| Kafka Metadata Management | KRaft                     | `<verified configuration>` |
-| Database                  | MongoDB Community         | `<verified version>`       |
-| Producer                  | Python                    | `<verified version>`       |
-| Processor                 | Python                    | `<verified version>`       |
-| REST API                  | Flask                     | `<verified version>`       |
-| Message Format            | JSON                      | N/A                        |
-
-Exact installed versions, package versions, and container image tags will be recorded after deployment and verified directly from the running systems.
-
-## Stack Selection Rationale
-
-The stack was selected based on the following considerations:
-
-* compatibility between components
-* suitability for an IoT-style producer/consumer pipeline
-* support for containerized applications
-* availability of official documentation
-* ability to manually configure and inspect each component
-* ability to reuse the stack in later course assignments
-* compatibility with AWS infrastructure
-* cost considerations related to the AWS Free Tier
-
-Apache Kafka is used as the message bus because the assignment focuses on Pub/Sub messaging and Kafka provides a clear producer → broker → consumer architecture.
-
-MongoDB is used as the persistent database because processed IoT records can be represented naturally as JSON-like documents.
-
-Python is used for the producer and processor because it allows the application logic to remain relatively small while interacting with Kafka, MongoDB, and HTTP services.
-
-Docker is used for the producer and processor so their dependencies and runtime environments can be packaged reproducibly.
-
----
-
-# 2. Architecture Decisions and Trade-offs
-
-This section records the major design decisions made during CA0.
-
-For each decision, the selected approach, alternatives, rationale, trade-offs, and eventual validation are documented.
-
-## Decision 1 – Cloud Provider
-
-**Selected:** Amazon Web Services (AWS)
-
-**Alternatives considered:**
-
-* Microsoft Azure
-* Google Cloud Platform
-* local/on-premises virtual machines
-
-**Rationale:**
-
-AWS provides EC2 virtual machines, VPC networking, Security Groups, SSH-based administration, and the infrastructure required to manually deploy the pipeline.
-
-AWS also allows the deployment to demonstrate cloud-specific networking and security concepts rather than running every component locally.
-
-The deployment will be designed with the AWS Free Tier and available account credits/allowances in mind to minimize unnecessary cost.
-
-**Trade-offs:**
-
-Using AWS introduces provider-specific concepts such as VPCs, subnets, Security Groups, EC2 instance types, and AWS billing.
-
-The Free Tier may also constrain VM sizes or runtime duration, requiring a balance between the assignment's recommended resources and cost.
-
-**Validation:**
-
-`<Complete after deployment.>`
-
----
-
-## Decision 2 – VM Architecture
-
-**Selected:** Four logically separated EC2 virtual machines, subject to final AWS Free Tier/cost verification.
-
-Planned roles:
+The final pipeline is:
 
 ```text
-ca0-producer
-ca0-broker
-ca0-processor
-ca0-database
+Synthetic Authentication Events
+            |
+            v
++---------------------------+
+| Producer EC2              |
+| 172.31.5.108              |
+|                           |
+| Docker                    |
+| +-----------------------+ |
+| | Python Producer       | |
+| | non-root UID 10001    | |
+| +-----------+-----------+ |
++-------------|-------------+
+              |
+              | JSON authentication events
+              | TCP 9092
+              v
++---------------------------+
+| Kafka Broker EC2          |
+| 172.31.12.74              |
+|                           |
+| Apache Kafka 4.3.1        |
+| Topic: auth-events        |
++-------------+-------------+
+              |
+              | Kafka consumer
+              v
++---------------------------+
+| Processor EC2             |
+| 172.31.8.80               |
+|                           |
+| Docker                    |
+| +-----------------------+ |
+| | Threat Processor v1.2 | |
+| | non-root UID 10001    | |
+| |                       | |
+| | Kafka Consumer        | |
+| | Threat Detection      | |
+| | REST API :8080        | |
+| +-----------+-----------+ |
++-------------|-------------+
+              |
+              | authenticated MongoDB connection
+              | TCP 27017
+              v
++---------------------------+
+| Database EC2              |
+| 172.31.13.96              |
+|                           |
+| MongoDB 8.0.29            |
+| DB: threat_monitor        |
+| Collection:              |
+| security_events           |
++---------------------------+
 ```
 
-**Alternatives considered:**
+---
 
-* three VMs with multiple services sharing a host
-* four VMs with one primary pipeline role per VM
-* running all services on fewer machines
+# 1. Project Purpose
 
-**Rationale:**
+The purpose of this project is to demonstrate a distributed cloud application using separate infrastructure components for:
 
-A four-VM architecture gives the main pipeline stages clear responsibilities:
+- event production;
+- publish/subscribe messaging;
+- stream processing;
+- persistent storage;
+- cybersecurity event classification;
+- REST-based retrieval;
+- containerization;
+- private cloud networking;
+- authentication and least-privilege access;
+- service restart/recovery.
+
+The application models authentication monitoring.
+
+Synthetic failed-login events are generated by a Producer and sent to Kafka. A Processor consumes the events and tracks consecutive failures for each `(username, source_ip)` combination.
+
+The Processor assigns one of the following classifications:
+
+| Consecutive failures | Classification |
+|---:|---|
+| Successful login | `NORMAL` |
+| 1–2 | `FAILED_LOGIN` |
+| 3–4 | `SUSPICIOUS` |
+| 5+ | `POSSIBLE_BRUTE_FORCE` |
+
+This is an educational heuristic for demonstrating stream processing. It is not intended to represent a production intrusion-detection algorithm.
+
+---
+
+# 2. AWS Architecture
+
+Four EC2 instances are used.
+
+| Component | Private IPv4 | Purpose |
+|---|---|---|
+| Producer | `172.31.5.108` | Runs Producer Docker container |
+| Kafka Broker | `172.31.12.74` | Runs Apache Kafka |
+| Processor | `172.31.8.80` | Runs threat Processor and REST API |
+| Database | `172.31.13.96` | Runs MongoDB |
+
+The application uses AWS private IPv4 addresses for inter-service communication.
+
+Public addresses are used only for administrative SSH access and are intentionally not hard-coded into application source code.
+
+---
+
+# 3. Technology Stack
+
+## Operating System
+
+Ubuntu Server 24.04 LTS is used on the deployed hosts.
+
+## Kafka
 
 ```text
-Producer VM → Kafka VM → Processor VM → Database VM
+Apache Kafka: 4.3.1
+Java: OpenJDK 17
+Mode: KRaft
+Topic: auth-events
+Partitions: 1
+Replication factor: 1
 ```
 
-Separating the components makes network communication, firewall rules, service dependencies, and failure boundaries easier to observe and document.
+This is a single-node Kafka deployment suitable for the assignment and demonstration environment.
 
-**Trade-offs:**
-
-Four VMs consume more cloud resources than consolidating services onto fewer machines.
-
-The final instance sizes will therefore be selected only after checking the AWS Free Tier available to the account.
-
-**Validation:**
-
-`<Complete after deployment.>`
-
----
-
-## Decision 3 – Operating System
-
-**Selected:** Ubuntu 24.04 LTS
-
-**Alternatives considered:**
-
-* Ubuntu 22.04 LTS
-* Amazon Linux
-
-**Rationale:**
-
-Ubuntu LTS provides a commonly used Linux server environment with broad documentation and support for the software planned for the pipeline.
-
-Using the same operating system across the VMs also reduces unnecessary differences between hosts.
-
-**Trade-offs:**
-
-Amazon Linux would provide tighter integration with the AWS ecosystem. Ubuntu was selected instead to provide a widely documented Linux environment that is portable beyond AWS.
-
-**Validation:**
-
-`<Record actual AMI and OS information after EC2 creation.>`
-
----
-
-## Decision 4 – Message Broker
-
-**Selected:** Apache Kafka
-
-**Alternatives considered:**
-
-* RabbitMQ
-* MQTT/Mosquitto
-* other Pub/Sub systems
-
-**Rationale:**
-
-Kafka directly supports the producer → broker → consumer messaging pattern studied in the course.
-
-The deployment provides practical experience with Kafka topics, producers, consumers, message retention, and consumer processing.
-
-**Trade-offs:**
-
-Kafka is more resource-intensive and operationally complex than lightweight brokers such as MQTT/Mosquitto.
-
-For a small CA0 workload, a lighter broker could be sufficient. Kafka is selected because learning and demonstrating Kafka's messaging model is valuable for the course reference stack.
-
-**Validation:**
-
-`<Verify by publishing and consuming a test message.>`
-
----
-
-## Decision 5 – Kafka Metadata Management
-
-**Selected:** KRaft, pending verification against the exact Kafka version deployed.
-
-**Alternative considered:**
-
-* ZooKeeper-based Kafka deployment
-
-**Rationale:**
-
-KRaft provides Kafka's metadata-management mechanism without requiring a separate ZooKeeper deployment.
-
-This reduces the number of independent services required for the CA0 environment.
-
-**Trade-offs:**
-
-Course material may discuss ZooKeeper-based Kafka architectures, so the difference between the reference material and the deployed architecture must be clearly documented.
-
-**Validation:**
-
-`<Record Kafka configuration and verify broker startup.>`
-
----
-
-## Decision 6 – Database
-
-**Selected:** MongoDB Community
-
-**Alternative considered:**
-
-* CouchDB
-
-**Rationale:**
-
-MongoDB provides document-oriented storage that maps naturally to JSON-like IoT records produced by the processor.
-
-It also allows processed records to be queried easily during end-to-end verification.
-
-**Trade-offs:**
-
-MongoDB introduces another independently managed service and must be configured carefully so that the database is not unnecessarily exposed to the Internet.
-
-**Validation:**
-
-`<Insert and query a test document, followed by an end-to-end processor-generated document.>`
-
----
-
-## Decision 7 – Container Runtime
-
-**Selected:** Docker Engine
-
-**Alternatives considered:**
-
-* direct host installation
-* Podman
-
-**Rationale:**
-
-Docker packages the producer and processor with their runtime dependencies and provides a reproducible execution environment.
-
-**Trade-offs:**
-
-Containers introduce an additional abstraction layer and require container networking, image management, and security configuration.
-
-**Validation:**
-
-`<Verify container images, runtime status, non-root execution, and restart behavior.>`
-
----
-
-## Decision 8 – Application Language
-
-**Selected:** Python
-
-**Alternatives considered:**
-
-* Java
-* Node.js
-
-**Rationale:**
-
-Python allows the producer, Kafka consumer/processor, MongoDB integration, and REST API to be implemented with relatively small applications.
-
-**Trade-offs:**
-
-Java has particularly mature integration with the Kafka ecosystem and may provide greater performance for larger workloads. CA0 prioritizes understandable implementation and deployment over high throughput.
-
-**Validation:**
-
-`<Record Python version and demonstrate successful application execution.>`
-
----
-
-## Decision 9 – REST Framework
-
-**Selected:** Flask
-
-**Alternative considered:**
-
-* FastAPI
-
-**Rationale:**
-
-The assignment requires at least one documented REST endpoint rather than a large web application. Flask provides enough functionality to implement a small HTTP API without adding unnecessary complexity.
-
-**Trade-offs:**
-
-FastAPI provides additional features such as automatic API documentation and stronger request/response modeling. Those features are not required for the small CA0 endpoint.
-
-**Validation:**
-
-`<Demonstrate successful HTTP request and JSON response.>`
-
----
-
-## Decision 10 – Private Service Communication
-
-**Selected:** Private VPC networking for communication between pipeline components.
-
-**Alternative considered:**
-
-* communication through public IP addresses
-
-**Rationale:**
-
-Kafka and MongoDB do not need to be exposed to the entire Internet. Internal pipeline communication can use private addresses within the AWS VPC.
-
-**Trade-offs:**
-
-Private networking requires additional understanding of VPC addressing, routing, Security Groups, and service bind/listener configuration.
-
-**Validation:**
-
-`<Verify Producer → Kafka → Processor → MongoDB communication using private addressing.>`
-
----
-
-# 3. AWS Environment
-
-## Region
+## MongoDB
 
 ```text
-AWS Region: <region>
+MongoDB Server: 8.0.29
+MongoDB Shell: 2.10.0
+Database: threat_monitor
+Collection: security_events
 ```
 
-### Region Selection Rationale
+## Containers
 
-`<Explain why the selected region was used, considering availability, latency, Free Tier/resource availability, and course requirements.>`
+Docker is used for the Producer and Processor applications.
 
----
-
-## Network Configuration
-
-| Resource          | Name     | Configuration     |
-| ----------------- | -------- | ----------------- |
-| VPC               | `<name>` | `<CIDR>`          |
-| Subnet            | `<name>` | `<CIDR>`          |
-| Availability Zone | `<AZ>`   |                   |
-| Route Table       | `<name>` | `<configuration>` |
-| Internet Gateway  | `<name>` | `<configuration>` |
-
-### Network Design
-
-The EC2 instances are placed inside the CA0 VPC and communicate using private IP addresses where possible.
-
-The network is designed so that only services that require communication with one another are permitted through the associated Security Groups.
-
----
-
-# 4. EC2 Virtual Machines
-
-The planned deployment uses four EC2 virtual machines.
-
-The exact instance type will be selected after checking the AWS Free Tier available to the account.
-
-| Host            | Purpose              | Instance Type |       vCPU |        RAM | OS     | Private IP | Public IP  |
-| --------------- | -------------------- | ------------- | ---------: | ---------: | ------ | ---------- | ---------- |
-| `ca0-producer`  | Producer(s)          | `<type>`      | `<actual>` | `<actual>` | Ubuntu | `<IP>`     | `<IP/N/A>` |
-| `ca0-broker`    | Kafka                | `<type>`      | `<actual>` | `<actual>` | Ubuntu | `<IP>`     | `<IP/N/A>` |
-| `ca0-processor` | Processor / REST API | `<type>`      | `<actual>` | `<actual>` | Ubuntu | `<IP>`     | `<IP/N/A>` |
-| `ca0-database`  | MongoDB              | `<type>`      | `<actual>` | `<actual>` | Ubuntu | `<IP>`     | `<IP/N/A>` |
-
-The assignment recommends approximately 2 vCPU and 4 GB RAM per VM. Any difference between that recommendation and the actual EC2 configuration will be documented under **Deviations / Issues Encountered**, including Free Tier/cost considerations.
-
-## EC2 Evidence
+The Processor host was verified with:
 
 ```text
-screenshots/01-ec2-instances.png
+Docker version 29.8.0
 ```
 
-![EC2 Instances](screenshots/01-ec2-instances.png)
+Both application images configure a non-root runtime user:
+
+```text
+UID 10001
+User appuser
+```
+
+## Python
+
+The application images use:
+
+```text
+python:3.12-slim
+```
+
+Key Python dependencies include:
+
+```text
+kafka-python==2.2.15
+pymongo==4.15.0
+Flask==3.1.2
+```
 
 ---
 
-# 5. Network Architecture
+# 4. Repository Structure
 
-## Data Flow
+```text
+CloudComputing/
+└── CA0/
+    ├── README.md
+    ├── config/
+    ├── diagrams/
+    ├── screenshots/
+    ├── producer/
+    │   ├── Dockerfile
+    │   ├── producer.py
+    │   └── requirements.txt
+    └── processor/
+        ├── Dockerfile
+        ├── processor.py
+        └── requirements.txt
+```
+
+Infrastructure-specific secrets are not stored in the repository.
+
+---
+
+# 5. Producer
+
+The Producer is a Python application packaged in Docker.
+
+It generates a synthetic authentication event similar to:
+
+```json
+{
+  "event_id": "16fdbfb3-3813-4e25-9351-f6a30f0a8fe0",
+  "username": "alice",
+  "source_ip": "192.0.2.15",
+  "success": false,
+  "timestamp": "2026-09-06T10:13:30.990067+00:00"
+}
+```
+
+Each event contains a UUID.
+
+The UUID is important because it allows the same event to be traced through:
 
 ```text
 Producer
    |
-   | publish
+   | event_id
    v
 Kafka
    |
-   | consume
+   | same event_id
    v
 Processor
    |
-   | insert
+   | same event_id
    v
 MongoDB
-   ^
-   |
-REST API
 ```
 
-## Network Diagram
+## Producer configuration
+
+The Producer reads configuration from environment variables:
 
 ```text
-                           Internet
-                              |
-                         SSH / REST
-                              |
-                              v
-              +--------------------------------+
-              |            AWS VPC             |
-              |          <VPC CIDR>            |
-              |                                |
-              |  +--------------------------+  |
-              |  |      <subnet CIDR>       |  |
-              |  |                          |  |
-              |  |  Producer               |  |
-              |  |     |                    |  |
-              |  |     | Kafka traffic      |  |
-              |  |     v                    |  |
-              |  |  Kafka Broker            |  |
-              |  |     |                    |  |
-              |  |     | Kafka traffic      |  |
-              |  |     v                    |  |
-              |  |  Processor + REST API    |  |
-              |  |     |                    |  |
-              |  |     | DB traffic         |  |
-              |  |     v                    |  |
-              |  |  MongoDB                 |  |
-              |  |                          |  |
-              |  +--------------------------+  |
-              |                                |
-              +--------------------------------+
+KAFKA_BROKER
+KAFKA_TOPIC
 ```
 
-Final network diagram:
+Defaults are defined in the source code for local development, while AWS-specific values are supplied at container runtime.
 
-```text
-diagrams/network-diagram.png
-```
-
-![Network Diagram](diagrams/network-diagram.png)
-
-The final diagram will document:
-
-* VPC CIDR
-* subnet CIDR
-* VM placement
-* private/public IP usage
-* required ports
-* communication paths
-* Internet boundary
-* VPC trust boundary
-* Security Group restrictions
-
----
-
-# 6. Security Groups and Firewall Rules
-
-Only ports required by the deployment will be permitted.
-
-|         Port | Protocol | Service  | Source                    | Purpose                    |
-| -----------: | -------- | -------- | ------------------------- | -------------------------- |
-|           22 | TCP      | SSH      | `<administrative source>` | Administrative access      |
-|         9092 | TCP      | Kafka    | `<required SG/hosts>`     | Producer/Processor → Kafka |
-|        27017 | TCP      | MongoDB  | `<processor only>`        | Processor → MongoDB        |
-| `<API port>` | TCP      | REST API | `<required source>`       | API access                 |
-
-The final rules will be based on the actual deployed configuration rather than assuming that every service must be publicly accessible.
-
-## Security Design
-
-The deployment follows the principle of least privilege.
-
-Kafka should only accept connections from systems that require Kafka access.
-
-MongoDB should only accept database traffic from the processor or other explicitly required systems.
-
-SSH administrative access should be restricted rather than unnecessarily exposed.
-
-## Security Controls
-
-* [ ] SSH key authentication enabled
-* [ ] SSH password authentication disabled
-* [ ] SSH private key stored securely
-* [ ] Kafka restricted to required hosts/security groups
-* [ ] MongoDB restricted to required hosts/security groups
-* [ ] Only necessary inbound ports opened
-* [ ] Containers run as non-root where supported
-* [ ] AWS credentials are not stored in GitHub
-* [ ] SSH private keys are not stored in GitHub
-* [ ] No application secrets committed to Git
-
-## Security Group Evidence
-
-![Security Groups](screenshots/02-security-groups.png)
-
----
-
-# 7. Software Installation
-
-## Docker
-
-Docker is installed on hosts that run containerized services.
-
-### Version
+Example:
 
 ```bash
-docker --version
+sudo docker run --rm \
+  -e KAFKA_BROKER=172.31.12.74:9092 \
+  -e KAFKA_TOPIC=auth-events \
+  ca0-auth-producer:1.0
 ```
 
-Observed output:
+This prevents the Kafka infrastructure address from being permanently embedded in the application logic.
+
+## Producer Docker security
+
+The Dockerfile creates:
 
 ```text
-<verified output>
+appuser
+UID 10001
 ```
 
-### Service Status
+The container was verified using:
 
 ```bash
-sudo systemctl status docker
-```
-
-### Startup Configuration
-
-```text
-<document how Docker starts automatically>
-```
-
-### Container Security
-
-```text
-<document non-root container configuration and verification>
-```
-
----
-
-# 8. Apache Kafka
-
-Kafka serves as the Pub/Sub message broker/message bus.
-
-## Host
-
-```text
-Host: ca0-broker
-Private IP: <IP>
-Kafka Port: 9092
-```
-
-## Kafka Architecture
-
-```text
-Producer
-   |
-   | publishes
-   v
-Kafka Broker
-   |
-   | Topic: <topic>
-   v
-Processor / Consumer
-```
-
-## Installation
-
-```bash
-# Add only commands actually executed and verified.
-```
-
-## Metadata Management
-
-```text
-Mode: <KRaft / actual mode>
-```
-
-Document the reason for the selected mode and the configuration used.
-
-## Kafka Topic
-
-```text
-Topic: sensor-data
-```
-
-Create/inspect the topic:
-
-```bash
-<verified command>
-```
-
-## Kafka Verification
-
-A standalone Kafka test will be performed before integrating the producer and processor.
-
-Test message:
-
-```text
-hello-ca0
-```
-
-Verification command:
-
-```bash
-<verified command>
+sudo docker run --rm \
+  --entrypoint id \
+  ca0-auth-producer:1.0
 ```
 
 Observed result:
 
 ```text
-<actual output>
+uid=10001(appuser) gid=10001(appuser) groups=10001(appuser)
 ```
 
-## Evidence
+Therefore, the Producer application does not run as root inside its container.
 
-![Kafka Running](screenshots/03-kafka-running.png)
+---
+
+# 6. Apache Kafka
+
+Kafka runs directly on the Broker EC2 instance.
+
+Private address:
+
+```text
+172.31.12.74
+```
+
+Kafka client port:
+
+```text
+9092
+```
+
+The configured topic is:
+
+```text
+auth-events
+```
+
+It was created with:
+
+```bash
+/opt/kafka/bin/kafka-topics.sh \
+  --create \
+  --topic auth-events \
+  --bootstrap-server localhost:9092 \
+  --partitions 1 \
+  --replication-factor 1
+```
+
+The topic was verified with:
+
+```bash
+/opt/kafka/bin/kafka-topics.sh \
+  --describe \
+  --topic auth-events \
+  --bootstrap-server localhost:9092
+```
+
+Kafka was configured as a systemd service.
+
+Verification included:
+
+```bash
+sudo systemctl is-enabled kafka
+sudo systemctl is-active kafka
+```
+
+The service was confirmed enabled and active.
+
+Kafka was also confirmed listening on port 9092:
+
+```bash
+sudo ss -lntp | grep 9092
+```
+
+---
+
+# 7. Producer-to-Kafka Network Validation
+
+Before running the Producer application, TCP connectivity from the Producer host to Kafka was tested independently.
+
+From the Producer VM:
+
+```bash
+nc -vz 172.31.12.74 9092
+```
+
+Result:
+
+```text
+Connection to 172.31.12.74 9092 port [tcp/*] succeeded!
+```
+
+This test separated network connectivity from application-level behavior.
+
+A successful `nc` test demonstrated:
+
+```text
+Producer EC2
+172.31.5.108
+      |
+      | TCP 9092
+      v
+Kafka EC2
+172.31.12.74
+```
+
+---
+
+# 8. Kafka Message Validation
+
+Before connecting the Docker Producer, Kafka was tested using its console tools.
+
+A manual event was published:
+
+```json
+{
+  "event_id": "evt-001",
+  "username": "alice",
+  "source_ip": "192.0.2.15",
+  "success": false
+}
+```
+
+The Kafka console consumer returned the same event.
+
+Later, the Docker Producer generated:
+
+```text
+event_id=152c876d-b3ae-4cfb-abd2-899c1a19c1f7
+```
+
+Kafka accepted it at:
+
+```text
+topic=auth-events
+partition=0
+offset=1
+```
+
+The Kafka console consumer independently returned the same UUID.
+
+This validated:
+
+```text
+Docker Producer
+      |
+      v
+Kafka Broker
+      |
+      v
+auth-events
+```
 
 ---
 
 # 9. MongoDB
 
-MongoDB stores records produced by the processor.
-
-## Host
+MongoDB runs on the Database EC2 instance:
 
 ```text
-Host: ca0-database
-Private IP: <IP>
+Private IPv4: 172.31.13.96
 Port: 27017
 ```
 
-## Installation
+MongoDB version:
+
+```text
+8.0.29
+```
+
+MongoDB Shell:
+
+```text
+2.10.0
+```
+
+The database service is managed by systemd.
+
+Verification:
 
 ```bash
-# Add only commands actually executed and verified.
+sudo systemctl is-enabled mongod
+sudo systemctl is-active mongod
 ```
 
-## Database Configuration
+Expected/observed state:
 
 ```text
-Database: ca0
-Collection: readings
+enabled
+active
 ```
 
-Names may be changed during implementation and will be updated to match the actual deployment.
-
-## Standalone Verification
-
-Before connecting the processor, MongoDB will be tested independently.
-
-Example verification sequence:
-
-```text
-Connect
-   ↓
-Insert test document
-   ↓
-Query test document
-   ↓
-Verify result
-```
-
-Commands:
+MongoDB functionality was also tested with:
 
 ```bash
-<verified commands>
+mongosh --eval 'db.runCommand({ ping: 1 })'
 ```
 
-Observed result:
+Result:
 
 ```text
-<actual output>
+{ ok: 1 }
 ```
-
-## Evidence
-
-![MongoDB](screenshots/04-mongodb.png)
 
 ---
 
-# 10. Producer
+# 10. MongoDB Network Configuration
 
-The producer simulates IoT devices and publishes sensor messages to Kafka.
-
-## Host
+MongoDB initially listened only on:
 
 ```text
-Host: ca0-producer
-
-Kafka destination:
-<broker-private-ip>:9092
-
-Topic:
-sensor-data
+127.0.0.1:27017
 ```
 
-## Container
+This prevented the remote Processor from connecting.
+
+The MongoDB configuration was changed from:
+
+```yaml
+net:
+  port: 27017
+  bindIp: 127.0.0.1
+```
+
+to:
+
+```yaml
+net:
+  port: 27017
+  bindIp: 127.0.0.1,172.31.13.96
+```
+
+This allows MongoDB to listen on:
 
 ```text
-Image: <image>
-Tag: <tag>
-Container user: <user/UID>
+127.0.0.1:27017
+172.31.13.96:27017
 ```
 
-Build/run:
+rather than using a general:
+
+```text
+0.0.0.0
+```
+
+binding.
+
+The intent is to expose MongoDB only through the host's private VPC interface.
+
+---
+
+# 11. Processor-to-MongoDB Network Validation
+
+Before implementing the MongoDB application client, TCP connectivity was tested from the Processor VM.
+
+From:
+
+```text
+172.31.8.80
+```
+
+the following command was run:
 
 ```bash
-<verified Docker commands>
+nc -vz 172.31.13.96 27017
 ```
 
-## Producer Behavior
+Result:
 
-The producer will:
+```text
+Connection to 172.31.13.96 27017 port [tcp/*] succeeded!
+```
 
-1. generate simulated sensor data
-2. create a message identifier
-3. add a timestamp
-4. serialize the message as JSON
-5. publish the message to the Kafka topic
-6. log the published message
+This independently demonstrated that the Processor could reach the MongoDB service.
 
-## Message Schema
+---
 
-Example:
+# 12. MongoDB Authentication
+
+MongoDB access control was enabled.
+
+The relevant configuration is:
+
+```yaml
+security:
+  authorization: enabled
+```
+
+Two database identities were created.
+
+## Administrative account
+
+```text
+ca0_admin
+```
+
+This account is reserved for database administration.
+
+## Application account
+
+```text
+ca0_processor
+```
+
+The Processor account has only:
+
+```text
+readWrite
+```
+
+permission on:
+
+```text
+threat_monitor
+```
+
+It is not used as a MongoDB administrator.
+
+This follows least-privilege principles.
+
+## Anonymous access test
+
+After authorization was enabled:
+
+```bash
+mongosh --quiet \
+  --eval 'db.adminCommand({listDatabases:1})'
+```
+
+returned:
+
+```text
+MongoServerError:
+Command listDatabases requires authentication
+```
+
+This confirmed anonymous administrative access was denied.
+
+## Application authentication test
+
+The `ca0_processor` account was authenticated using:
+
+```bash
+mongosh \
+  --host 127.0.0.1 \
+  --username ca0_processor \
+  --authenticationDatabase threat_monitor \
+  --password
+```
+
+`connectionStatus` showed:
+
+```text
+authenticatedUsers:
+  ca0_processor @ threat_monitor
+
+authenticatedUserRoles:
+  readWrite @ threat_monitor
+```
+
+Passwords and MongoDB connection secrets are intentionally omitted from this repository.
+
+---
+
+# 13. Secret Management
+
+MongoDB credentials are not stored in:
+
+```text
+processor.py
+Dockerfile
+requirements.txt
+README.md
+GitHub
+```
+
+Instead, the Processor VM contains:
+
+```text
+/etc/ca0/processor.env
+```
+
+Permissions were configured as:
+
+```text
+-rw------- root root
+```
+
+using:
+
+```bash
+sudo chown root:root /etc/ca0/processor.env
+sudo chmod 600 /etc/ca0/processor.env
+```
+
+The file contains runtime configuration such as:
+
+```text
+KAFKA_BROKER
+KAFKA_TOPIC
+MONGODB_URI
+MONGODB_DATABASE
+MONGODB_COLLECTION
+```
+
+The actual MongoDB password is intentionally not documented.
+
+---
+
+# 14. Threat Processor
+
+The Processor is a Python application running in Docker on:
+
+```text
+172.31.8.80
+```
+
+It performs four major functions:
+
+1. consumes authentication events from Kafka;
+2. tracks consecutive failed logins;
+3. assigns a threat classification;
+4. stores the enriched event in MongoDB.
+
+The Processor also exposes the REST API.
+
+---
+
+# 15. Threat Classification
+
+Events are grouped using:
+
+```text
+(username, source_ip)
+```
+
+The Processor maintains an in-memory counter for consecutive failures.
+
+The classification logic is:
+
+```text
+successful login
+    |
+    v
+NORMAL
+failure counter reset to 0
+```
+
+For failures:
+
+```text
+failure 1 -> FAILED_LOGIN
+failure 2 -> FAILED_LOGIN
+failure 3 -> SUSPICIOUS
+failure 4 -> SUSPICIOUS
+failure 5 -> POSSIBLE_BRUTE_FORCE
+failure 6+ -> POSSIBLE_BRUTE_FORCE
+```
+
+The Processor adds:
+
+```text
+failed_attempts
+status
+```
+
+to each event before storing it.
+
+Example processed document:
 
 ```json
 {
-  "message_id": "<unique-id>",
-  "device_id": "sensor-01",
-  "timestamp": "<timestamp>",
-  "temperature": 85
+  "event_id": "15b29141-7760-4c47-bbba-bca10ba673b2",
+  "username": "alice",
+  "source_ip": "192.0.2.15",
+  "success": false,
+  "timestamp": "2026-09-06T10:44:35.551109+00:00",
+  "failed_attempts": 5,
+  "status": "POSSIBLE_BRUTE_FORCE"
 }
 ```
 
-The final schema will reflect the implemented producer.
+---
 
-## Evidence
+# 16. Kafka Offset Reliability
 
-![Producer](screenshots/05-producer.png)
+The first Processor implementation used:
+
+```python
+enable_auto_commit=True
+```
+
+During testing, MongoDB authentication failed after Kafka events had already been consumed.
+
+The Kafka consumer group later showed:
+
+```text
+CURRENT-OFFSET = 9
+LOG-END-OFFSET = 9
+LAG = 0
+```
+
+even though some earlier MongoDB writes had failed.
+
+This exposed an important reliability issue.
+
+The Processor was changed to:
+
+```python
+enable_auto_commit=False
+```
+
+After a successful MongoDB insertion:
+
+```python
+result = collection.insert_one(processed_event)
+```
+
+the Processor explicitly performs:
+
+```python
+consumer.commit()
+```
+
+The processing sequence is therefore:
+
+```text
+Kafka event
+    |
+    v
+Processor
+    |
+    v
+Classify event
+    |
+    v
+MongoDB insert
+    |
+    | success
+    v
+Kafka offset commit
+```
+
+This reduces the risk of acknowledging an event before its database write succeeds.
+
+It does not provide exactly-once processing. A crash after MongoDB insertion but before the Kafka commit could cause the event to be processed again.
 
 ---
 
-# 11. Processor
+# 17. Processor Container
 
-The processor consumes messages from Kafka, performs a transformation, and stores the resulting records in MongoDB.
-
-## Host
+The Processor Docker image uses:
 
 ```text
-Host: ca0-processor
+python:3.12-slim
 ```
 
-## Connections
-
-Kafka:
+The image creates:
 
 ```text
-<broker-private-ip>:9092
+appuser
+UID 10001
 ```
 
-MongoDB:
+The runtime identity was verified:
 
 ```text
-mongodb://<database-private-ip>:27017/<database>
+uid=10001(appuser)
+gid=10001(appuser)
 ```
 
-## Container
+The Processor therefore does not run as root inside the container.
+
+---
+
+# 18. Persistent Processor Deployment
+
+Early testing used:
 
 ```text
-Image: <image>
-Tag: <tag>
-Container user: <user/UID>
+docker run --rm
+```
+
+in the foreground.
+
+When the SSH session ended, the Processor stopped.
+
+The final Processor is therefore deployed as a background service:
+
+```bash
+sudo docker run -d \
+  --name ca0-threat-processor \
+  --restart unless-stopped \
+  --env-file /etc/ca0/processor.env \
+  -p 8080:8080 \
+  ca0-threat-processor:1.2
+```
+
+The restart policy was verified as:
+
+```text
+unless-stopped
+```
+
+The running container was verified with:
+
+```bash
+sudo docker ps
+```
+
+Processor image:
+
+```text
+ca0-threat-processor:1.2
+```
+
+---
+
+# 19. End-to-End Validation
+
+A complete event was successfully traced through all backend stages.
+
+The Producer generated:
+
+```text
+event_id=16fdbfb3-3813-4e25-9351-f6a30f0a8fe0
+```
+
+Kafka accepted the event.
+
+The Processor received the same UUID and produced:
+
+```text
+status=FAILED_LOGIN
+failed_attempts=1
+```
+
+MongoDB then independently returned:
+
+```text
+event_id:
+16fdbfb3-3813-4e25-9351-f6a30f0a8fe0
+
+username:
+alice
+
+source_ip:
+192.0.2.15
+
+success:
+false
+
+failed_attempts:
+1
+
+status:
+FAILED_LOGIN
+```
+
+This demonstrated:
+
+```text
+Producer
+   |
+   | UUID X
+   v
+Kafka
+   |
+   | UUID X
+   v
+Processor
+   |
+   | UUID X
+   v
+MongoDB
+   |
+   +-- UUID X
+```
+
+---
+
+# 20. Brute-Force Detection Validation
+
+Five consecutive synthetic failures were generated for:
+
+```text
+username=alice
+source_ip=192.0.2.15
+```
+
+The Processor logs showed:
+
+```text
+failed_attempts=1
+status=FAILED_LOGIN
+
+failed_attempts=2
+status=FAILED_LOGIN
+
+failed_attempts=3
+status=SUSPICIOUS
+
+failed_attempts=4
+status=SUSPICIOUS
+
+failed_attempts=5
+status=POSSIBLE_BRUTE_FORCE
+```
+
+The fifth event was:
+
+```text
+event_id=15b29141-7760-4c47-bbba-bca10ba673b2
+```
+
+and was persisted in MongoDB.
+
+This demonstrates that the Processor is not simply forwarding events. It performs stateful event classification.
+
+---
+
+# 21. REST API
+
+Processor version `1.2` adds a Flask REST API.
+
+The API listens on:
+
+```text
+8080
+```
+
+The Docker deployment maps:
+
+```text
+Host 8080 -> Container 8080
+```
+
+The following endpoints are implemented.
+
+## GET /health
+
+Purpose:
+
+```text
+Verify REST service and MongoDB connectivity.
+```
+
+Example:
+
+```bash
+curl http://localhost:8080/health
+```
+
+Observed response:
+
+```json
+{
+  "kafka_topic": "auth-events",
+  "mongodb": "connected",
+  "status": "ok"
+}
+```
+
+## GET /events
+
+Purpose:
+
+```text
+Return recent processed authentication events.
+```
+
+Example:
+
+```bash
+curl http://localhost:8080/events
+```
+
+The endpoint returns up to 100 recent stored events.
+
+## GET /alerts
+
+Purpose:
+
+```text
+Return higher-risk authentication events.
+```
+
+Example:
+
+```bash
+curl http://localhost:8080/alerts
+```
+
+The endpoint selects:
+
+```text
+SUSPICIOUS
+POSSIBLE_BRUTE_FORCE
+```
+
+events.
+
+The API successfully returned the previously detected brute-force event:
+
+```text
+event_id=15b29141-7760-4c47-bbba-bca10ba673b2
+failed_attempts=5
+status=POSSIBLE_BRUTE_FORCE
+```
+
+---
+
+# 22. REST API Security
+
+Flask binds to:
+
+```text
+0.0.0.0:8080
+```
+
+inside the container so Docker can publish the service.
+
+This does not automatically mean that the REST API should be exposed to the public Internet.
+
+The API was validated locally on the Processor host using:
+
+```text
+localhost:8080
+```
+
+Public exposure should be controlled separately using AWS Security Group rules according to assignment requirements.
+
+The current Flask server also reports:
+
+```text
+WARNING: This is a development server.
+Do not use it in a production deployment.
+```
+
+This is acceptable for the assignment demonstration but is documented as a limitation.
+
+A production deployment should use a production WSGI server and appropriate TLS/authentication.
+
+---
+
+# 23. Evidence
+
+Evidence was captured during deployment and validation.
+
+Recommended screenshot organization:
+
+```text
+CA0/screenshots/
+```
+
+Evidence includes:
+
+1. EC2 instances running.
+2. Private IP addresses.
+3. Producer-to-Kafka `nc` connectivity.
+4. Kafka service running.
+5. Kafka topic configuration.
+6. Manual Kafka publish/consume test.
+7. Producer Docker image.
+8. Producer non-root UID.
+9. Producer publishing event UUID.
+10. Kafka consuming matching UUID.
+11. MongoDB service running.
+12. MongoDB authentication denial without credentials.
+13. MongoDB authenticated application user.
+14. Processor-to-MongoDB `nc` connectivity.
+15. Processor Docker image.
+16. Processor non-root UID.
+17. End-to-end event processing.
+18. MongoDB returning matching event UUID.
+19. Brute-force classification progression.
+20. `POSSIBLE_BRUTE_FORCE` persisted in MongoDB.
+21. Processor v1.2 running.
+22. REST `/health` response.
+23. REST `/alerts` response.
+24. REST `/events` response.
+
+---
+
+# 24. Reproduction Summary
+
+## Producer
+
+Build:
+
+```bash
+cd CA0/producer
+
+sudo docker build \
+  -t ca0-auth-producer:1.0 .
 ```
 
 Run:
 
 ```bash
-<verified Docker command>
+sudo docker run --rm \
+  -e KAFKA_BROKER=172.31.12.74:9092 \
+  -e KAFKA_TOPIC=auth-events \
+  ca0-auth-producer:1.0
 ```
 
-## Processor Behavior
+## Processor
+
+Build:
+
+```bash
+cd CA0/processor
+
+sudo docker build \
+  -t ca0-threat-processor:1.2 .
+```
+
+Runtime configuration must first exist in:
 
 ```text
-Receive Kafka message
-        |
-        v
-Deserialize JSON
-        |
-        v
-Perform transformation
-        |
-        v
-Create processed record
-        |
-        v
-Insert into MongoDB
-        |
-        v
-Log successful processing
-        |
-        v
-Wait for next message
+/etc/ca0/processor.env
 ```
 
-Example transformation:
+The MongoDB password must be supplied securely and is intentionally not included in this README.
 
-```text
-Input:
-temperature = 95
+Run:
 
-Processed result:
-status = HOT
+```bash
+sudo docker run -d \
+  --name ca0-threat-processor \
+  --restart unless-stopped \
+  --env-file /etc/ca0/processor.env \
+  -p 8080:8080 \
+  ca0-threat-processor:1.2
 ```
 
-The exact transformation used in the final deployment will be documented here.
+Verify:
 
-## Evidence
+```bash
+sudo docker ps
+sudo docker logs ca0-threat-processor
+```
 
-![Processor](screenshots/06-processor.png)
+REST tests:
+
+```bash
+curl http://localhost:8080/health
+curl http://localhost:8080/events
+curl http://localhost:8080/alerts
+```
 
 ---
 
-# 12. REST API
-
-The processor host exposes at least one documented REST endpoint for pipeline data retrieval or control.
-
-## Framework
-
-```text
-Framework: Flask
-Version: <verified version>
-```
-
-## Endpoint
-
-```text
-Method: GET
-Endpoint: /readings
-Port: <port>
-```
+# 25. Integrity Packet
 
 ## Purpose
 
-The endpoint retrieves processed sensor records without requiring the client to directly access MongoDB.
+This Integrity Packet preserves the engineering reasoning behind the assignment.
 
-Conceptually:
+It records:
 
-```text
-Client
-   |
-   | GET /readings
-   v
-REST API
-   |
-   | query
-   v
-MongoDB
-   |
-   | records
-   v
-REST API
-   |
-   | JSON
-   v
-Client
-```
-
-## Request
-
-```bash
-curl http://<host>:<port>/readings
-```
-
-## Response
-
-```json
-{
-  "<replace>": "<actual verified response>"
-}
-```
-
-## Evidence
-
-![REST API](screenshots/07-rest-api.png)
+- what was built;
+- what claims are being made;
+- what evidence supports those claims;
+- assumptions and limitations;
+- failed attempts;
+- validation steps;
+- AI assistance;
+- decisions made by the student;
+- unresolved questions.
 
 ---
 
-# 13. End-to-End Data Pipeline
+## 25.1 Claim
 
-The complete deployed pipeline is:
+### Primary Claim
+
+I built and validated a distributed cloud-based authentication threat-monitoring pipeline on AWS.
+
+The deployed system performs:
 
 ```text
-Producer Container
-       |
-       | JSON message
-       v
-Kafka Broker
-       |
-       | sensor-data topic
-       v
-Processor Container
-       |
-       | processed document
-       v
+Synthetic authentication event
+        |
+        v
+Docker Producer
+        |
+        v
+Apache Kafka
+        |
+        v
+Docker Processor
+        |
+        v
+Threat classification
+        |
+        v
 MongoDB
+        |
+        v
+REST API
 ```
 
-The REST API provides a separate retrieval path:
+The system successfully detects repeated synthetic failed-login events and classifies the fifth consecutive failure as:
 
 ```text
-Client → REST API → MongoDB → REST API → Client
+POSSIBLE_BRUTE_FORCE
 ```
 
-## End-to-End Test Procedure
-
-### Step 1 – Establish Initial State
-
-Record the initial database state.
-
-```bash
-<command>
-```
-
-### Step 2 – Start/Observe Producer
-
-```bash
-<command>
-```
-
-Record the generated `message_id`.
-
-### Step 3 – Verify Kafka
-
-```bash
-<command>
-```
-
-Verify that the expected message is present/consumed.
-
-### Step 4 – Verify Processor
-
-```bash
-<command>
-```
-
-Verify that the processor received the same `message_id`.
-
-### Step 5 – Verify MongoDB
-
-```bash
-<command>
-```
-
-Verify that MongoDB contains the processed record with the corresponding `message_id`.
-
-### Step 6 – Verify REST API
-
-```bash
-curl http://<host>:<port>/readings
-```
-
-Verify that the expected stored record can be retrieved.
-
-## Result
+The result is persisted in MongoDB and retrievable through:
 
 ```text
-<Describe the actual observed end-to-end result.>
+GET /alerts
+```
+
+### Supporting Claims
+
+I also claim that:
+
+- Producer-to-Kafka communication works over the AWS private network.
+- Processor-to-MongoDB communication works over the AWS private network.
+- Kafka messages can be traced using unique event IDs.
+- MongoDB requires authentication.
+- The application uses a least-privilege MongoDB Processor account.
+- MongoDB credentials are not committed to GitHub.
+- Producer and Processor containers run as non-root users.
+- Kafka starts through systemd.
+- MongoDB starts through systemd.
+- The Processor container uses a Docker restart policy.
+- Kafka offsets are explicitly committed only after successful MongoDB insertion.
+- REST endpoints retrieve persisted data.
+
+---
+
+## 25.2 Assumptions
+
+The following assumptions were made.
+
+### Single-node Kafka
+
+Kafka uses:
+
+```text
+replication-factor=1
+```
+
+because the assignment uses one Kafka Broker VM.
+
+This configuration is not fault tolerant.
+
+### Synthetic authentication data
+
+The authentication events are generated for demonstration purposes.
+
+For example:
+
+```text
+username=alice
+source_ip=192.0.2.15
+```
+
+The events do not represent real users or real authentication traffic.
+
+### Brute-force heuristic
+
+The classification:
+
+```text
+5 failed attempts -> POSSIBLE_BRUTE_FORCE
+```
+
+is an educational threshold.
+
+Five failures alone do not prove a real cyberattack.
+
+### Processor state
+
+The consecutive-failure counters are stored in:
+
+```python
+defaultdict(int)
+```
+
+inside Processor memory.
+
+Therefore, restarting the Processor resets those counters.
+
+MongoDB retains processed events, but the in-memory detection state is not reconstructed after restart.
+
+### REST API
+
+The REST API uses Flask's development server.
+
+It is suitable for this assignment demonstration but is not presented as a production API deployment.
+
+---
+
+# 25.3 Evidence
+
+## Network Evidence
+
+Producer-to-Kafka:
+
+```bash
+nc -vz 172.31.12.74 9092
+```
+
+returned a successful TCP connection.
+
+Processor-to-MongoDB:
+
+```bash
+nc -vz 172.31.13.96 27017
+```
+
+also returned a successful TCP connection.
+
+## Kafka Evidence
+
+Kafka was verified using:
+
+```bash
+sudo systemctl status kafka
+```
+
+and:
+
+```bash
+sudo ss -lntp | grep 9092
+```
+
+The `auth-events` topic was created and described using Kafka CLI tools.
+
+A manual Kafka event was successfully produced and consumed.
+
+## Producer Evidence
+
+The Producer container returned:
+
+```text
+Published event: ...
+Kafka topic=auth-events
+partition=0
+offset=...
+```
+
+The same event ID was independently retrieved from Kafka.
+
+## Container Security Evidence
+
+Producer:
+
+```text
+uid=10001(appuser)
+```
+
+Processor:
+
+```text
+uid=10001(appuser)
+```
+
+This demonstrates non-root container execution.
+
+## MongoDB Evidence
+
+MongoDB returned:
+
+```text
+{ ok: 1 }
+```
+
+for a database ping.
+
+Unauthenticated administrative access returned:
+
+```text
+Command listDatabases requires authentication
+```
+
+Authenticated `ca0_processor` access showed:
+
+```text
+readWrite @ threat_monitor
 ```
 
 ## End-to-End Evidence
 
-![End-to-End Test](screenshots/08-end-to-end-test.png)
+One event was traced using:
+
+```text
+event_id=
+16fdbfb3-3813-4e25-9351-f6a30f0a8fe0
+```
+
+The same event ID appeared in:
+
+```text
+Producer
+Kafka
+Processor
+MongoDB
+```
+
+## Threat Detection Evidence
+
+Five consecutive failures produced:
+
+```text
+1 -> FAILED_LOGIN
+2 -> FAILED_LOGIN
+3 -> SUSPICIOUS
+4 -> SUSPICIOUS
+5 -> POSSIBLE_BRUTE_FORCE
+```
+
+The fifth event was persisted in MongoDB.
+
+## REST Evidence
+
+The health endpoint returned:
+
+```json
+{
+  "kafka_topic": "auth-events",
+  "mongodb": "connected",
+  "status": "ok"
+}
+```
+
+The `/alerts` endpoint returned `SUSPICIOUS` and `POSSIBLE_BRUTE_FORCE` records.
+
+The `/events` endpoint returned the stored event history.
 
 ---
 
-# 14. Service Persistence
+# 25.4 Validation
 
-Required services are configured to start automatically after VM reboot.
+The system was not considered working based only on process status.
 
-| Service   | Host            | Startup Method   | Verified |
-| --------- | --------------- | ---------------- | -------- |
-| Kafka     | `ca0-broker`    | `<systemd/etc.>` | ⬜        |
-| MongoDB   | `ca0-database`  | `<systemd/etc.>` | ⬜        |
-| Processor | `ca0-processor` | `<method>`       | ⬜        |
-| Producer  | `ca0-producer`  | `<method>`       | ⬜        |
+Individual layers were validated separately.
 
-## Reboot Verification
+## Layer 1 — VM connectivity
 
-For each required host:
+Private IP communication was tested using:
 
 ```text
-1. Verify service is running
-2. Reboot VM
-3. Reconnect
-4. Verify service restarted
-5. Run pipeline test
+ping
 ```
 
-Commands:
+## Layer 2 — TCP service connectivity
+
+Kafka:
 
 ```bash
-<verified commands>
+nc -vz 172.31.12.74 9092
 ```
 
-Observed result:
-
-```text
-<actual result>
-```
-
----
-
-# 15. Logging
-
-Each component has a known method/location for retrieving logs.
-
-| Component | Log Location / Command |
-| --------- | ---------------------- |
-| Kafka     | `<location/command>`   |
-| MongoDB   | `<location/command>`   |
-| Processor | `<location/command>`   |
-| Producer  | `<location/command>`   |
-| REST API  | `<location/command>`   |
-
-Example:
+MongoDB:
 
 ```bash
-<command used to inspect logs>
+nc -vz 172.31.13.96 27017
 ```
 
-Logs used as evidence will avoid exposing credentials or private keys.
+## Layer 3 — Service status
 
----
+Kafka:
 
-# 16. Configuration Summary
+```bash
+systemctl is-active kafka
+systemctl is-enabled kafka
+```
 
-| Component | Image / Version   | Host            |     Port |
-| --------- | ----------------- | --------------- | -------: |
-| Kafka     | `<version>`       | `ca0-broker`    |     9092 |
-| MongoDB   | `<version>`       | `ca0-database`  |    27017 |
-| Processor | `<image:tag>`     | `ca0-processor` |      N/A |
-| Producer  | `<image:tag>`     | `ca0-producer`  |      N/A |
-| REST API  | `<version/image>` | `ca0-processor` | `<port>` |
+MongoDB:
 
----
+```bash
+systemctl is-active mongod
+systemctl is-enabled mongod
+```
 
-# 17. Repository Structure
+## Layer 4 — Application protocol
+
+Kafka was tested by publishing and consuming an actual message.
+
+MongoDB was tested with:
 
 ```text
-CA0/
-|
-├── README.md
-|
-├── docs/
-│   ├── commands.md
-│   ├── configuration.md
-│   └── integrity-packet.md
-|
-├── diagrams/
-│   └── network-diagram.png
-|
-├── screenshots/
-│   ├── 01-ec2-instances.png
-│   ├── 02-security-groups.png
-│   ├── 03-kafka-running.png
-│   ├── 04-mongodb.png
-│   ├── 05-producer.png
-│   ├── 06-processor.png
-│   ├── 07-rest-api.png
-│   └── 08-end-to-end-test.png
-|
-├── config/
-│   └── ...
-|
-├── scripts/
-│   └── ...
-|
-├── producer/
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── <producer source>
-|
-└── processor/
-    ├── Dockerfile
-    ├── requirements.txt
-    └── <processor/API source>
+db.runCommand({ ping: 1 })
 ```
 
-The final repository structure will be updated to match the actual implementation.
+## Layer 5 — Container execution
 
----
+Docker images were built and executed.
 
-# 18. Reproduction Procedure
+Container runtime UIDs were verified.
 
-A new deployment should be reproducible by following these high-level steps:
+## Layer 6 — End-to-end event path
 
-1. Create the documented AWS network.
-2. Create the required Security Groups.
-3. Launch the documented Ubuntu EC2 instances.
-4. Configure SSH key-only authentication.
-5. Install required host software.
-6. Install and configure Kafka.
-7. Create the Kafka topic.
-8. Install and configure MongoDB.
-9. Build and launch the Producer container.
-10. Build and launch the Processor/API container.
-11. Configure service startup behavior.
-12. Run standalone component tests.
-13. Run the complete end-to-end test.
-14. Verify the REST endpoint.
-15. Verify security controls.
-16. Perform reboot/persistence testing.
+Matching UUIDs were compared across Producer, Kafka, Processor, and MongoDB.
 
-Detailed commands are documented in:
+## Layer 7 — Cybersecurity behavior
+
+Repeated failures were generated to trigger each classification level.
+
+## Layer 8 — REST retrieval
+
+`curl` was used against:
 
 ```text
-docs/commands.md
+/health
+/events
+/alerts
 ```
 
 ---
 
-# 19. Deviations / Issues Encountered
+# 25.5 Failed Attempts and Engineering Changes
 
-Any difference between the original reference architecture and the final deployment is documented here.
+Several failures occurred during the implementation.
 
-| Issue / Deviation | Reason     | Solution / Decision | Validation     |
-| ----------------- | ---------- | ------------------- | -------------- |
-| `<issue>`         | `<reason>` | `<solution>`        | `<validation>` |
+These failures were retained as engineering evidence rather than hidden.
 
-Potential examples include:
+## Failure 1 — SSH placeholder
 
-* EC2 instance sizing changed because of AWS Free Tier constraints
-* Kafka configuration changed because of version compatibility
-* service ports/configuration changed from the initial design
-* a software version was changed after compatibility testing
-
-If there are no significant deviations:
+An SSH command was initially attempted using:
 
 ```text
-No significant deviations from the selected reference stack.
+BROKER_PUBLIC_IP
 ```
 
----
+literally.
 
-# 20. Cost / AWS Free Tier Considerations
+This failed because it was a placeholder rather than a hostname.
 
-The deployment is designed to minimize unnecessary AWS charges while still satisfying the assignment requirements.
+The command was corrected using the actual Broker public IPv4 address.
 
-Before launching resources, the Free Tier benefits/credits applicable to the AWS account will be checked.
+### Lesson
 
-The following will be recorded:
-
-| Item                                    | Actual Configuration |
-| --------------------------------------- | -------------------- |
-| AWS Free Tier model/account eligibility | `<verified>`         |
-| EC2 instance types                      | `<actual>`           |
-| Number of EC2 instances                 | `<actual>`           |
-| EBS storage                             | `<actual>`           |
-| Public IPv4 usage                       | `<actual>`           |
-| Estimated/observed cost                 | `<actual>`           |
-
-Resources that are not needed after testing should be stopped or terminated as appropriate.
-
-Any deviation from the assignment's recommended approximately 2 vCPU / 4 GB RAM VM size due to Free Tier constraints will be explicitly documented rather than hidden.
+Documentation placeholders must be replaced with deployed infrastructure values.
 
 ---
 
-# 21. Integrity Packet
+## Failure 2 — SSH key used from wrong machine
 
-The CA0 Integrity Packet is available at:
-
-[`docs/integrity-packet.md`](docs/integrity-packet.md)
-
-It documents:
-
-* claims made about the deployment
-* supporting evidence
-* assumptions
-* design decisions
-* AI-generated guidance used
-* guidance accepted
-* guidance rejected
-* external documentation used for validation
-* validation procedures
-* final verification results
-
-## Evidence Philosophy
-
-Important deployment claims should be supported by observable evidence.
-
-Example:
+An attempt was made to run:
 
 ```text
-Claim:
-Producer messages successfully reach MongoDB through Kafka and the processor.
+ssh -i ~/.ssh/ca0-key.pem ...
+```
 
-Evidence:
-Producer log + processor log + MongoDB query containing the same message_id.
+from inside an EC2 instance.
 
-Validation:
-A new message was generated and traced through all pipeline stages.
+The key existed on the local Mac, not the EC2 VM.
+
+### Lesson
+
+The EC2 private SSH key should remain on the trusted administrative machine rather than being copied unnecessarily between servers.
+
+---
+
+## Failure 3 — Duplicate Kafka download
+
+Kafka was accidentally downloaded twice:
+
+```text
+kafka_2.13-4.3.1.tgz
+kafka_2.13-4.3.1.tgz.1
+```
+
+The duplicate archive was removed.
+
+### Lesson
+
+Verify downloaded artifacts before repeating installation commands.
+
+---
+
+## Failure 4 — Kafka KRaft formatting
+
+Initial Kafka storage formatting failed with:
+
+```text
+Because controller.quorum.voters is not set ...
+you must specify one of:
+--standalone
+--initial-controllers
+--no-initial-controllers
+```
+
+For this single-node assignment deployment, formatting was repeated with:
+
+```text
+--standalone
+```
+
+Kafka then initialized successfully.
+
+### Lesson
+
+Kafka 4.x KRaft initialization requires explicit controller bootstrap behavior.
+
+---
+
+## Failure 5 — MongoDB kernel incompatibility
+
+MongoDB 8.0.29 initially failed to start.
+
+The system log reported:
+
+```text
+MongoDB cannot start:
+Linux kernel versions 6.19 and newer
+has a known incompatibility with this version
+of MongoDB.
+```
+
+The Database VM was running:
+
+```text
+7.0.0-1012-aws
+```
+
+Inspection showed that the VM also had:
+
+```text
+6.17.0-1017-aws
+```
+
+installed.
+
+The GRUB configuration was backed up and modified to boot:
+
+```text
+Ubuntu, with Linux 6.17.0-1017-aws
+```
+
+After reboot:
+
+```bash
+uname -r
+```
+
+returned:
+
+```text
+6.17.0-1017-aws
+```
+
+The private database address remained:
+
+```text
+172.31.13.96
+```
+
+MongoDB then started successfully and:
+
+```text
+{ ok: 1 }
+```
+
+was returned by the MongoDB ping command.
+
+### Lesson
+
+Package installation success does not prove service compatibility.
+
+Service logs and actual runtime validation are required.
+
+---
+
+## Failure 6 — MongoDB application password
+
+During initial user creation, a placeholder password string was accidentally used when creating:
+
+```text
+ca0_processor
+```
+
+The user already existed when a second creation was attempted.
+
+The existing user's password was corrected using:
+
+```text
+db.updateUser(...)
+```
+
+Authentication was then independently verified.
+
+### Lesson
+
+Configuration placeholders should never be treated as actual secret values.
+
+---
+
+## Failure 7 — MongoDB authentication
+
+The first Processor execution received Kafka events but failed MongoDB insertion with:
+
+```text
+Authentication failed
+```
+
+Direct login using:
+
+```text
+ca0_processor
+```
+
+was tested against MongoDB.
+
+This confirmed that MongoDB itself was working and narrowed the problem to the Processor runtime configuration.
+
+The protected environment file was corrected.
+
+The Processor then successfully inserted events.
+
+### Lesson
+
+Troubleshooting should isolate:
+
+```text
+network
+authentication
+application
+```
+
+rather than changing all layers simultaneously.
+
+---
+
+## Failure 8 — Processor container disappeared
+
+The Processor was initially executed with:
+
+```text
+docker run --rm
+```
+
+in the foreground.
+
+After the terminal/session ended, no Processor container remained.
+
+The final deployment changed to:
+
+```text
+-d
+--restart unless-stopped
+```
+
+### Lesson
+
+Foreground containers are useful for debugging but are not sufficient for persistent service deployment.
+
+---
+
+## Failure 9 — Kafka offset handling
+
+The original Processor used:
+
+```text
+enable_auto_commit=True
+```
+
+During a MongoDB authentication failure, Kafka offsets still advanced.
+
+The implementation was changed to:
+
+```text
+enable_auto_commit=False
+```
+
+and:
+
+```text
+MongoDB insert
+    |
+    v
+consumer.commit()
+```
+
+### Lesson
+
+Message acknowledgement should follow successful downstream processing when possible.
+
+---
+
+# 25.6 AI Assistance
+
+AI assistance was used throughout the assignment as an interactive engineering guide.
+
+AI helped with:
+
+- AWS deployment planning;
+- EC2 role separation;
+- SSH commands;
+- Kafka installation;
+- KRaft configuration;
+- Kafka topic creation;
+- Docker installation;
+- Producer implementation;
+- Processor implementation;
+- MongoDB installation;
+- MongoDB authentication;
+- REST API implementation;
+- debugging;
+- command interpretation;
+- documentation structure.
+
+AI output was not treated as automatically correct.
+
+Several recommendations were tested against the actual environment.
+
+Examples include:
+
+### MongoDB compatibility
+
+The initial MongoDB installation plan appeared valid at the OS/package level.
+
+Actual service startup testing revealed a Linux kernel incompatibility.
+
+The failure was diagnosed from:
+
+```text
+systemctl
+journalctl
+kernel package inspection
+```
+
+The deployment approach was then changed.
+
+### Kafka acknowledgement behavior
+
+The initial Processor implementation used Kafka automatic offset commits.
+
+Observed behavior during a MongoDB authentication failure exposed a reliability weakness.
+
+The design was changed to manual commits after successful MongoDB writes.
+
+### Docker lifecycle
+
+Foreground `--rm` execution was initially useful for testing.
+
+Observed container disappearance after session termination showed that this was unsuitable for the final Processor deployment.
+
+The final container uses:
+
+```text
+-d
+--restart unless-stopped
+```
+
+### Security
+
+AI suggested:
+
+- non-root containers;
+- environment-variable configuration;
+- avoiding credentials in GitHub;
+- a restricted MongoDB application user;
+- protecting the runtime environment file;
+- avoiding unnecessary public MongoDB exposure.
+
+These recommendations were implemented and independently verified.
+
+---
+
+# 25.7 Critique of AI Assistance
+
+AI assistance was useful for reducing the time required to discover commands and understand unfamiliar components.
+
+However, the deployment demonstrated why AI recommendations require verification.
+
+Important examples:
+
+1. A supported operating-system/package combination still encountered an unexpected kernel-level runtime incompatibility.
+2. Kafka auto-commit initially appeared convenient but was inappropriate once downstream database failure behavior was observed.
+3. Docker foreground execution worked during testing but did not satisfy persistent-service requirements.
+4. Some commands contained placeholders that required careful replacement with actual infrastructure values.
+5. Security recommendations required checking the actual AWS and MongoDB configuration rather than assuming application configuration alone provided protection.
+
+The most reliable workflow was:
+
+```text
+AI recommendation
+      |
+      v
+Understand command
+      |
+      v
+Run command
+      |
+      v
+Observe actual result
+      |
+      v
+Verify independently
+      |
+      v
+Accept / modify / reject
 ```
 
 ---
 
-# 22. Demo Video
+# 25.8 Ownership
 
-A 1–2 minute demonstration will show:
+I performed the deployment and validation steps in my AWS environment.
 
-1. required services running
-2. producer generating/publishing data
-3. Kafka participating in the message flow
-4. processor consuming/processing the message
-5. MongoDB containing the resulting record
-6. REST API request and successful response
+I:
 
-**Demo Video:** `<external-video-link>`
+- created and managed the EC2 instances;
+- established SSH access;
+- recorded private IP addresses;
+- installed Docker;
+- installed and configured Kafka;
+- created the Kafka topic;
+- tested Kafka manually;
+- built Docker images;
+- ran Producer containers;
+- installed and configured MongoDB;
+- investigated MongoDB startup failure;
+- changed the database boot kernel;
+- configured MongoDB networking;
+- created MongoDB users;
+- enabled MongoDB authorization;
+- tested authentication;
+- configured the Processor runtime environment;
+- deployed Processor container versions;
+- generated authentication events;
+- inspected Processor logs;
+- queried MongoDB;
+- tested the REST API;
+- captured screenshots;
+- committed and pushed application code through Git.
 
----
+AI supplied explanations, example commands, debugging suggestions, and code drafts.
 
-# 23. Final Verification Checklist
-
-## Infrastructure
-
-* [ ] 3–4 AWS EC2 VMs provisioned
-* [ ] Instance sizing documented
-* [ ] Any difference from approximately 2 vCPU / 4 GB documented
-* [ ] VM names documented
-* [ ] Private IPs documented
-* [ ] Public IPs documented where applicable
-* [ ] Region documented
-* [ ] Availability Zone documented
-* [ ] VPC documented
-* [ ] Subnet/CIDR documented
-* [ ] Instance types documented
-* [ ] AMI/OS documented
-
-## Pipeline
-
-* [ ] Producer operational
-* [ ] Kafka operational
-* [ ] Kafka topic created
-* [ ] Processor operational
-* [ ] MongoDB operational
-* [ ] Producer → Kafka verified
-* [ ] Kafka → Processor verified
-* [ ] Processor → MongoDB verified
-* [ ] Complete end-to-end flow verified
-* [ ] Correlated message/record captured as evidence
-
-## REST API
-
-* [ ] REST endpoint documented
-* [ ] Method documented
-* [ ] Port documented
-* [ ] Successful request demonstrated
-* [ ] Successful response captured
-
-## Security
-
-* [ ] SSH key authentication works
-* [ ] Password SSH disabled
-* [ ] SSH access appropriately restricted
-* [ ] Kafka access restricted
-* [ ] MongoDB access restricted
-* [ ] Minimal inbound ports
-* [ ] Containers non-root where supported
-* [ ] No AWS credentials committed
-* [ ] No SSH private keys committed
-* [ ] No secrets exposed in screenshots
-
-## Service Management
-
-* [ ] Required services start on boot
-* [ ] Reboot test performed
-* [ ] Log locations/commands documented
-
-## Documentation
-
-* [ ] README complete
-* [ ] Reference stack documented
-* [ ] Architecture decisions documented
-* [ ] Trade-offs documented
-* [ ] Configuration summary complete
-* [ ] Network diagram complete
-* [ ] Trust boundaries shown
-* [ ] Screenshots included
-* [ ] Software versions documented
-* [ ] Commands/instructions documented
-* [ ] Deviations documented
-* [ ] Reproduction procedure documented
-
-## Submission
-
-* [ ] Integrity Packet complete
-* [ ] End-to-end evidence captured
-* [ ] Demo video recorded
-* [ ] Demo video link added
-* [ ] Repository reviewed for secrets
-* [ ] Repository pushed to GitHub
+I executed the commands, observed the actual outputs, identified whether they succeeded or failed, and made deployment decisions based on those results.
 
 ---
 
-# 24. AI Assistance
+# 25.9 Open Questions / Escalation
 
-AI assistance was used for technical guidance, architecture discussion, troubleshooting, and documentation support.
+The following limitations or questions remain.
 
-AI-generated recommendations are not treated as evidence that the deployment works.
+## In-memory detection state
 
-Recommendations used during CA0 are validated using one or more of the following:
+Failure counters reset when the Processor container restarts.
 
-* official documentation
-* actual AWS configuration
-* command output
-* service status
-* application logs
-* network tests
-* database queries
-* REST API responses
-* end-to-end testing
+A more robust design could persist detection state using:
 
-AI recommendations that are rejected or modified are also recorded when relevant.
+- MongoDB;
+- Kafka Streams state;
+- Redis;
+- another durable state store.
 
-Detailed AI usage, assumptions, validation, accepted guidance, and rejected guidance are documented in the **Integrity Packet**.
+## Exactly-once processing
+
+Manual Kafka commits improve reliability but do not provide exactly-once semantics.
+
+A crash between:
+
+```text
+MongoDB insert
+```
+
+and:
+
+```text
+Kafka commit
+```
+
+could create duplicate processing.
+
+A future version could use:
+
+- idempotent writes;
+- a unique index on `event_id`;
+- transactional/outbox patterns;
+- Kafka-compatible transactional processing.
+
+## Kafka availability
+
+The Kafka deployment uses one broker and replication factor 1.
+
+Therefore, it has no broker-level redundancy.
+
+## MongoDB availability
+
+MongoDB is a single database instance rather than a replica set.
+
+## REST authentication
+
+The REST API currently does not implement application-level authentication.
+
+Public exposure should therefore be avoided unless additional controls are added.
+
+## REST server
+
+Flask's development server is used.
+
+A production deployment should use a production WSGI server.
+
+## TLS
+
+Kafka, MongoDB application traffic, and the REST API do not currently implement end-to-end TLS as part of this assignment deployment.
+
+They rely on the controlled AWS environment/private networking where applicable.
+
+## Detection sophistication
+
+The brute-force heuristic is intentionally simple.
+
+A real security system could consider:
+
+- time windows;
+- source-IP reputation;
+- geographic anomalies;
+- username enumeration;
+- device identity;
+- historical behavior;
+- distributed attack sources;
+- rate thresholds.
+
+---
+
+# 25.10 Review Test
+
+Another engineer reviewing this repository should be able to determine:
+
+## What was built?
+
+A four-VM AWS event-processing pipeline:
+
+```text
+Producer
+  ->
+Kafka
+  ->
+Threat Processor
+  ->
+MongoDB
+  ->
+REST API
+```
+
+## Why do I believe it works?
+
+Each layer was tested independently and then validated end-to-end.
+
+## What evidence supports it?
+
+Evidence includes:
+
+- TCP connectivity tests;
+- service status;
+- Kafka CLI results;
+- matching event UUIDs;
+- Docker UID verification;
+- MongoDB authentication tests;
+- MongoDB queries;
+- threat-classification logs;
+- REST responses;
+- screenshots.
+
+## Where did AI help?
+
+AI provided implementation guidance, explanations, troubleshooting suggestions, and code drafts.
+
+## Where did I take over?
+
+I executed the deployment, interpreted actual outputs, captured evidence, corrected configuration, validated recommendations, and made decisions when real system behavior differed from the original plan.
+
+## What remains uncertain?
+
+Production-level:
+
+- fault tolerance;
+- durable Processor state;
+- exactly-once processing;
+- API authentication;
+- TLS;
+- high availability;
+- production WSGI deployment.
+
+These are documented limitations rather than claims that the assignment system already provides those capabilities.
+
+---
+
+# 26. Final Result
+
+The final deployed system successfully demonstrated:
+
+```text
+Synthetic failed login
+        |
+        v
+Docker Producer
+        |
+        v
+Kafka auth-events
+        |
+        v
+Docker Threat Processor
+        |
+        +--> failure counter
+        |
+        +--> threat classification
+        |
+        v
+Authenticated MongoDB write
+        |
+        v
+Persistent security event
+        |
+        v
+REST API
+        |
+        +--> /health
+        +--> /events
+        +--> /alerts
+```
+
+The demonstrated detection sequence was:
+
+```text
+FAILED_LOGIN
+FAILED_LOGIN
+SUSPICIOUS
+SUSPICIOUS
+POSSIBLE_BRUTE_FORCE
+```
+
+The final `POSSIBLE_BRUTE_FORCE` event was persisted in MongoDB and returned through the REST `/alerts` endpoint.
+
+This provides end-to-end evidence that the distributed CA0 system is operational.
