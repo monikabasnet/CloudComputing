@@ -1511,55 +1511,57 @@ CA0/screenshots/
 
 Selected evidence can be embedded below after the final screenshot filenames have been assigned.
 
+# Screenshots
+
+Critical screenshots collected during deployment and validation are stored in the `CA0/screenshots/` directory.
+
 ## AWS Infrastructure
 
-```markdown
-![AWS EC2 Instances](/Users/monikabasnet/Downloads/CloudComputing/CA0/screenshots/EC2 Instances.png)
-```
+![AWS EC2 Instances](screenshots/EC2%20Instances.png)
+
+The four EC2 instances used for the Producer, Kafka Broker, Processor, and MongoDB database are shown above.
 
 ## Kafka
 
-```markdown
-![Kafka Service](screenshots/systemctl status kafka.png)
-```
+![Kafka Service](screenshots/systemctl%20status%20kafka.png)
+
+The Kafka service was verified as active on the Broker VM.
 
 ## Non-Root Container
 
-```markdown
-![Non-Root Container](screenshots/Nonroot Container.png)
-```
+![Non-Root Container](screenshots/Nonroot%20Container.png)
+
+The application container was verified as running with the non-root `appuser` account.
 
 ## Producer
 
-```markdown
 ![Producer Event](screenshots/04-producer-event.png)
-```
+
+A synthetic authentication event was generated and published to Kafka.
 
 ## Processor
 
-```markdown
 ![Processor Pipeline](screenshots/05-processor-pipeline.png)
-```
+
+The authentication event was consumed and processed by the Processor.
 
 ## Brute-Force Detection
 
-```markdown
-![Brute Force Detection](screenshots/Possible Brute Force.png)
-```
+![Brute Force Detection](screenshots/Possible%20Brute%20Force.png)
+
+Repeated failed login attempts were classified until `POSSIBLE_BRUTE_FORCE` was reached.
 
 ## MongoDB
 
-```markdown
 ![MongoDB Record](screenshots/07-mongodb-record.png)
-```
+
+The processed authentication event was verified in MongoDB.
 
 ## REST API
 
-```markdown
-![REST API](screenshots/Get Alerts.png)
-```
+![REST API](screenshots/Get%20Alerts.png)
 
----
+The `/alerts` REST endpoint was used to retrieve the stored security alerts.
 
 # Reproduction Summary
 
