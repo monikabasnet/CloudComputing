@@ -1520,13 +1520,13 @@ Selected evidence can be embedded below after the final screenshot filenames hav
 ## Kafka
 
 ```markdown
-![Kafka Service](/Users/monikabasnet/Downloads/CloudComputing/CA0/screenshots/systemctl status kafka.png)
+![Kafka Service](screenshots/systemctl status kafka.png)
 ```
 
 ## Non-Root Container
 
 ```markdown
-![Non-Root Container](/Users/monikabasnet/Downloads/CloudComputing/CA0/screenshots/Nonroot Container.png)
+![Non-Root Container](screenshots/Nonroot Container.png)
 ```
 
 ## Producer
@@ -1544,7 +1544,7 @@ Selected evidence can be embedded below after the final screenshot filenames hav
 ## Brute-Force Detection
 
 ```markdown
-![Brute Force Detection](/Users/monikabasnet/Downloads/CloudComputing/CA0/screenshots/Possible Brute Force.png)
+![Brute Force Detection](screenshots/Possible Brute Force.png)
 ```
 
 ## MongoDB
@@ -1556,7 +1556,7 @@ Selected evidence can be embedded below after the final screenshot filenames hav
 ## REST API
 
 ```markdown
-![REST API](/Users/monikabasnet/Downloads/CloudComputing/CA0/screenshots/Get Alerts.png)
+![REST API](screenshots/Get Alerts.png)
 ```
 
 ---
