@@ -32,6 +32,10 @@ The detection rule was created for demonstration purposes and is not intended to
 
 ---
 
+##Walkthrough Demo Video
+[![DemoVideo](https://youtube.com)](https://youtu.be/OgisKCdBjMc)
+
+
 ## Architecture
 
 Four EC2 instances were used.
