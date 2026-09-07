@@ -35,18 +35,6 @@ The detection rule was created as an educational example of stream processing an
 
 ---
 
-## Assignment Deliverables
-
-The main CA0 deliverables are available at the following locations:
-
-- [Integrity Packet](INTEGRITY_PACKET.md)
-- [Network Diagram](diagrams/network-diagram.png)
-- [Validation Screenshots](screenshots/)
-- [Producer Source Code](producer/)
-- [Processor Source Code](processor/)
-- [Demo Video](TODO_FINAL_DEMO_URL)
-
----
 
 # Demo Video
 
@@ -1605,21 +1593,20 @@ Repeated failed authentication attempts were classified until `POSSIBLE_BRUTE_FO
 
 The `/alerts` REST endpoint was used to retrieve stored security alerts.
 
+
 ## Security Group Evidence
 
-The final Security Group screenshot should be added after verification:
+The  Security Group screenshot  after verification:
 
-```text
-screenshots/security-groups.png
-```
+![REST API](/CA0/screenshots/Security%20Group%20Evidence.png)
+
+
 
 ## SSH Security Evidence
 
-The final SSH security screenshot should be added after verification:
+The final SSH security screenshot  after verification:
+![SSH security](/CA0/screenshots/SSH%20Security.png)
 
-```text
-screenshots/ssh-security.png
-```
 
 ---
 
@@ -1725,7 +1712,6 @@ The Integrity Packet is maintained separately from the technical deployment docu
 
 It records the claims made about the deployment, supporting evidence, assumptions, validation results, AI assistance, verification of AI-generated guidance, ownership, and remaining limitations.
 
-[View the CA0 Integrity Packet](INTEGRITY_PACKET.md)
 
 ---
 
