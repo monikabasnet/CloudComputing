@@ -1,0 +1,21 @@
+---
+# Non-secret configuration shared across the CA1 deployment.
+
+# Kafka
+kafka_port: 9092
+kafka_topic: "auth-events"
+kafka_version: "4.3.1"
+kafka_cluster_id: "MkU3OEVBNTcwNTJENDM2Qk"
+
+# MongoDB
+mongodb_port: 27017
+mongodb_version: "8.0.29"
+mongodb_database: "threat_monitor"
+mongodb_collection: "security_events"
+
+# REST API
+rest_api_port: 8080
+
+# Application container images
+producer_image: "ca1-auth-producer:1.0"
+processor_image: "ca1-threat-processor:1.2"

@@ -1,0 +1,2303 @@
+=== CA1 Automated Teardown ===
+
+The following Terraform-managed AWS resources will be destroyed:
+
+[0m[1mdata.aws_ami.ubuntu: Reading...[0m[0m
+[0m[1maws_key_pair.ca1: Refreshing state... [id=ca1-key][0m
+[0m[1maws_vpc.ca1: Refreshing state... [id=vpc-0746b414e4ad43025][0m
+[0m[1mdata.aws_ami.ubuntu: Read complete after 1s [id=ami-00adec9774170bad2][0m
+[0m[1maws_internet_gateway.ca1: Refreshing state... [id=igw-0b75f047856a46dca][0m
+[0m[1maws_subnet.public: Refreshing state... [id=subnet-04828b0be44716668][0m
+[0m[1maws_route_table.public: Refreshing state... [id=rtb-0aee91eb02c29ad6d][0m
+[0m[1maws_security_group.producer: Refreshing state... [id=sg-0d5bc9d80ba429a1e][0m
+[0m[1maws_security_group.processor: Refreshing state... [id=sg-027593aab322946ce][0m
+[0m[1maws_security_group.mongodb: Refreshing state... [id=sg-0fa522b2013180c46][0m
+[0m[1maws_security_group.kafka: Refreshing state... [id=sg-0a69c016168bd6c13][0m
+[0m[1maws_route.internet_access: Refreshing state... [id=r-rtb-0aee91eb02c29ad6d1080289494][0m
+[0m[1maws_vpc_security_group_egress_rule.processor_all_outbound: Refreshing state... [id=sgr-0b549ccb2fff38da4][0m
+[0m[1maws_vpc_security_group_ingress_rule.processor_rest: Refreshing state... [id=sgr-038cbb4340a59ab65][0m
+[0m[1maws_vpc_security_group_ingress_rule.processor_ssh: Refreshing state... [id=sgr-057085c36f667aebb][0m
+[0m[1maws_route_table_association.public: Refreshing state... [id=rtbassoc-09e1bc899a2c47176][0m
+[0m[1maws_vpc_security_group_egress_rule.producer_all_outbound: Refreshing state... [id=sgr-0674e82ab61b9f0f8][0m
+[0m[1maws_vpc_security_group_ingress_rule.producer_ssh: Refreshing state... [id=sgr-0d28b1d8ac82b6499][0m
+[0m[1maws_instance.processor: Refreshing state... [id=i-07569ab45480ca67f][0m
+[0m[1maws_instance.producer: Refreshing state... [id=i-0f8fc13ad21495bdd][0m
+[0m[1maws_vpc_security_group_egress_rule.mongodb_all_outbound: Refreshing state... [id=sgr-0c2379fac4805e270][0m
+[0m[1maws_vpc_security_group_ingress_rule.mongodb_from_processor: Refreshing state... [id=sgr-029dbcbfdbcd2ec6f][0m
+[0m[1maws_vpc_security_group_ingress_rule.mongodb_ssh: Refreshing state... [id=sgr-042ea3d2b30321fda][0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_from_producer: Refreshing state... [id=sgr-0f8709119d3ca04b7][0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_ssh: Refreshing state... [id=sgr-021ea47d8660f4da1][0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_from_processor: Refreshing state... [id=sgr-05168a9ccf7ea7bcd][0m
+[0m[1maws_instance.mongodb: Refreshing state... [id=i-06396b10d0044b96e][0m
+[0m[1maws_instance.kafka: Refreshing state... [id=i-0c61a48f116d6fe2e][0m
+[0m[1maws_vpc_security_group_egress_rule.kafka_all_outbound: Refreshing state... [id=sgr-0a4e1298aa4242639][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [31m-[0m destroy[0m
+
+Terraform will perform the following actions:
+
+[1m  # aws_instance.kafka[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_instance" "kafka" {
+      [31m-[0m[0m ami                                  = "ami-00adec9774170bad2" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-2:913210542757:instance/i-0c61a48f116d6fe2e" [90m-> null[0m[0m
+      [31m-[0m[0m associate_public_ip_address          = true [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone                    = "us-east-2b" [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_stop                     = false [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_termination              = false [90m-> null[0m[0m
+      [31m-[0m[0m ebs_optimized                        = false [90m-> null[0m[0m
+      [31m-[0m[0m force_destroy                        = false [90m-> null[0m[0m
+      [31m-[0m[0m get_password_data                    = false [90m-> null[0m[0m
+      [31m-[0m[0m hibernation                          = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                   = "i-0c61a48f116d6fe2e" [90m-> null[0m[0m
+      [31m-[0m[0m instance_initiated_shutdown_behavior = "stop" [90m-> null[0m[0m
+      [31m-[0m[0m instance_state                       = "running" [90m-> null[0m[0m
+      [31m-[0m[0m instance_type                        = "c7i-flex.large" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_address_count                   = 0 [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_addresses                       = [] [90m-> null[0m[0m
+      [31m-[0m[0m key_name                             = "ca1-key" [90m-> null[0m[0m
+      [31m-[0m[0m monitoring                           = false [90m-> null[0m[0m
+      [31m-[0m[0m placement_partition_number           = 0 [90m-> null[0m[0m
+      [31m-[0m[0m primary_network_interface_id         = "eni-019b66991c74272d3" [90m-> null[0m[0m
+      [31m-[0m[0m private_dns                          = "ip-10-10-1-5.us-east-2.compute.internal" [90m-> null[0m[0m
+      [31m-[0m[0m private_ip                           = "10.10.1.5" [90m-> null[0m[0m
+      [31m-[0m[0m public_dns                           = "ec2-52-14-191-37.us-east-2.compute.amazonaws.com" [90m-> null[0m[0m
+      [31m-[0m[0m public_ip                            = "52.14.191.37" [90m-> null[0m[0m
+      [31m-[0m[0m region                               = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m secondary_private_ips                = [] [90m-> null[0m[0m
+      [31m-[0m[0m security_groups                      = [] [90m-> null[0m[0m
+      [31m-[0m[0m source_dest_check                    = true [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id                            = "subnet-04828b0be44716668" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                 = {
+          [31m-[0m[0m "Component" = "Kafka"
+          [31m-[0m[0m "Name"      = "ca1-kafka"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                             = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "Kafka"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-kafka"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tenancy                              = "default" [90m-> null[0m[0m
+      [31m-[0m[0m user_data_replace_on_change          = false [90m-> null[0m[0m
+      [31m-[0m[0m vpc_security_group_ids               = [
+          [31m-[0m[0m "sg-0a69c016168bd6c13",
+        ] [90m-> null[0m[0m
+        [90m# (8 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m capacity_reservation_specification {
+          [31m-[0m[0m capacity_reservation_preference = "open" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m cpu_options {
+          [31m-[0m[0m core_count            = 1 [90m-> null[0m[0m
+          [31m-[0m[0m threads_per_core      = 2 [90m-> null[0m[0m
+            [90m# (2 unchanged attributes hidden)[0m[0m
+        }
+
+      [31m-[0m[0m enclave_options {
+          [31m-[0m[0m enabled = false [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m maintenance_options {
+          [31m-[0m[0m auto_recovery = "default" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m metadata_options {
+          [31m-[0m[0m http_endpoint               = "enabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_protocol_ipv6          = "disabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_put_response_hop_limit = 2 [90m-> null[0m[0m
+          [31m-[0m[0m http_tokens                 = "required" [90m-> null[0m[0m
+          [31m-[0m[0m instance_metadata_tags      = "disabled" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m primary_network_interface {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m network_interface_id  = "eni-019b66991c74272d3" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m private_dns_name_options {
+          [31m-[0m[0m enable_resource_name_dns_a_record    = false [90m-> null[0m[0m
+          [31m-[0m[0m enable_resource_name_dns_aaaa_record = false [90m-> null[0m[0m
+          [31m-[0m[0m hostname_type                        = "ip-name" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m root_block_device {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m device_name           = "/dev/sda1" [90m-> null[0m[0m
+          [31m-[0m[0m encrypted             = true [90m-> null[0m[0m
+          [31m-[0m[0m iops                  = 3000 [90m-> null[0m[0m
+          [31m-[0m[0m kms_key_id            = "arn:aws:kms:us-east-2:913210542757:key/97205804-60a4-4a7a-83d8-e94be73659c1" [90m-> null[0m[0m
+          [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
+          [31m-[0m[0m tags_all              = {
+              [31m-[0m[0m "Assignment" = "CA1"
+              [31m-[0m[0m "ManagedBy"  = "Terraform"
+              [31m-[0m[0m "Project"    = "CS5287-CA1"
+            } [90m-> null[0m[0m
+          [31m-[0m[0m throughput            = 125 [90m-> null[0m[0m
+          [31m-[0m[0m volume_id             = "vol-0bf539e5f8e1ed3df" [90m-> null[0m[0m
+          [31m-[0m[0m volume_size           = 8 [90m-> null[0m[0m
+          [31m-[0m[0m volume_type           = "gp3" [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_instance.mongodb[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_instance" "mongodb" {
+      [31m-[0m[0m ami                                  = "ami-0ea1cddefe0c4aed5" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-2:913210542757:instance/i-06396b10d0044b96e" [90m-> null[0m[0m
+      [31m-[0m[0m associate_public_ip_address          = true [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone                    = "us-east-2b" [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_stop                     = false [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_termination              = false [90m-> null[0m[0m
+      [31m-[0m[0m ebs_optimized                        = false [90m-> null[0m[0m
+      [31m-[0m[0m force_destroy                        = false [90m-> null[0m[0m
+      [31m-[0m[0m get_password_data                    = false [90m-> null[0m[0m
+      [31m-[0m[0m hibernation                          = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                   = "i-06396b10d0044b96e" [90m-> null[0m[0m
+      [31m-[0m[0m instance_initiated_shutdown_behavior = "stop" [90m-> null[0m[0m
+      [31m-[0m[0m instance_state                       = "running" [90m-> null[0m[0m
+      [31m-[0m[0m instance_type                        = "c7i-flex.large" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_address_count                   = 0 [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_addresses                       = [] [90m-> null[0m[0m
+      [31m-[0m[0m key_name                             = "ca1-key" [90m-> null[0m[0m
+      [31m-[0m[0m monitoring                           = false [90m-> null[0m[0m
+      [31m-[0m[0m placement_partition_number           = 0 [90m-> null[0m[0m
+      [31m-[0m[0m primary_network_interface_id         = "eni-05fdd18f510078756" [90m-> null[0m[0m
+      [31m-[0m[0m private_dns                          = "ip-10-10-1-146.us-east-2.compute.internal" [90m-> null[0m[0m
+      [31m-[0m[0m private_ip                           = "10.10.1.146" [90m-> null[0m[0m
+      [31m-[0m[0m public_dns                           = "ec2-3-131-119-125.us-east-2.compute.amazonaws.com" [90m-> null[0m[0m
+      [31m-[0m[0m public_ip                            = "3.131.119.125" [90m-> null[0m[0m
+      [31m-[0m[0m region                               = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m secondary_private_ips                = [] [90m-> null[0m[0m
+      [31m-[0m[0m security_groups                      = [] [90m-> null[0m[0m
+      [31m-[0m[0m source_dest_check                    = true [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id                            = "subnet-04828b0be44716668" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                 = {
+          [31m-[0m[0m "Component" = "MongoDB"
+          [31m-[0m[0m "Name"      = "ca1-mongodb"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                             = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "MongoDB"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-mongodb"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tenancy                              = "default" [90m-> null[0m[0m
+      [31m-[0m[0m user_data_replace_on_change          = false [90m-> null[0m[0m
+      [31m-[0m[0m vpc_security_group_ids               = [
+          [31m-[0m[0m "sg-0fa522b2013180c46",
+        ] [90m-> null[0m[0m
+        [90m# (8 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m capacity_reservation_specification {
+          [31m-[0m[0m capacity_reservation_preference = "open" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m cpu_options {
+          [31m-[0m[0m core_count            = 1 [90m-> null[0m[0m
+          [31m-[0m[0m threads_per_core      = 2 [90m-> null[0m[0m
+            [90m# (2 unchanged attributes hidden)[0m[0m
+        }
+
+      [31m-[0m[0m enclave_options {
+          [31m-[0m[0m enabled = false [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m maintenance_options {
+          [31m-[0m[0m auto_recovery = "default" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m metadata_options {
+          [31m-[0m[0m http_endpoint               = "enabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_protocol_ipv6          = "disabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_put_response_hop_limit = 2 [90m-> null[0m[0m
+          [31m-[0m[0m http_tokens                 = "required" [90m-> null[0m[0m
+          [31m-[0m[0m instance_metadata_tags      = "disabled" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m primary_network_interface {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m network_interface_id  = "eni-05fdd18f510078756" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m private_dns_name_options {
+          [31m-[0m[0m enable_resource_name_dns_a_record    = false [90m-> null[0m[0m
+          [31m-[0m[0m enable_resource_name_dns_aaaa_record = false [90m-> null[0m[0m
+          [31m-[0m[0m hostname_type                        = "ip-name" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m root_block_device {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m device_name           = "/dev/sda1" [90m-> null[0m[0m
+          [31m-[0m[0m encrypted             = true [90m-> null[0m[0m
+          [31m-[0m[0m iops                  = 3000 [90m-> null[0m[0m
+          [31m-[0m[0m kms_key_id            = "arn:aws:kms:us-east-2:913210542757:key/97205804-60a4-4a7a-83d8-e94be73659c1" [90m-> null[0m[0m
+          [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
+          [31m-[0m[0m tags_all              = {
+              [31m-[0m[0m "Assignment" = "CA1"
+              [31m-[0m[0m "ManagedBy"  = "Terraform"
+              [31m-[0m[0m "Project"    = "CS5287-CA1"
+            } [90m-> null[0m[0m
+          [31m-[0m[0m throughput            = 125 [90m-> null[0m[0m
+          [31m-[0m[0m volume_id             = "vol-01be4142ca16dc85e" [90m-> null[0m[0m
+          [31m-[0m[0m volume_size           = 8 [90m-> null[0m[0m
+          [31m-[0m[0m volume_type           = "gp3" [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_instance.processor[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_instance" "processor" {
+      [31m-[0m[0m ami                                  = "ami-00adec9774170bad2" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-2:913210542757:instance/i-07569ab45480ca67f" [90m-> null[0m[0m
+      [31m-[0m[0m associate_public_ip_address          = true [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone                    = "us-east-2b" [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_stop                     = false [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_termination              = false [90m-> null[0m[0m
+      [31m-[0m[0m ebs_optimized                        = false [90m-> null[0m[0m
+      [31m-[0m[0m force_destroy                        = false [90m-> null[0m[0m
+      [31m-[0m[0m get_password_data                    = false [90m-> null[0m[0m
+      [31m-[0m[0m hibernation                          = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                   = "i-07569ab45480ca67f" [90m-> null[0m[0m
+      [31m-[0m[0m instance_initiated_shutdown_behavior = "stop" [90m-> null[0m[0m
+      [31m-[0m[0m instance_state                       = "running" [90m-> null[0m[0m
+      [31m-[0m[0m instance_type                        = "c7i-flex.large" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_address_count                   = 0 [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_addresses                       = [] [90m-> null[0m[0m
+      [31m-[0m[0m key_name                             = "ca1-key" [90m-> null[0m[0m
+      [31m-[0m[0m monitoring                           = false [90m-> null[0m[0m
+      [31m-[0m[0m placement_partition_number           = 0 [90m-> null[0m[0m
+      [31m-[0m[0m primary_network_interface_id         = "eni-0f30eb37426aecec0" [90m-> null[0m[0m
+      [31m-[0m[0m private_dns                          = "ip-10-10-1-248.us-east-2.compute.internal" [90m-> null[0m[0m
+      [31m-[0m[0m private_ip                           = "10.10.1.248" [90m-> null[0m[0m
+      [31m-[0m[0m public_dns                           = "ec2-3-137-139-10.us-east-2.compute.amazonaws.com" [90m-> null[0m[0m
+      [31m-[0m[0m public_ip                            = "3.137.139.10" [90m-> null[0m[0m
+      [31m-[0m[0m region                               = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m secondary_private_ips                = [] [90m-> null[0m[0m
+      [31m-[0m[0m security_groups                      = [] [90m-> null[0m[0m
+      [31m-[0m[0m source_dest_check                    = true [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id                            = "subnet-04828b0be44716668" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                 = {
+          [31m-[0m[0m "Component" = "Processor"
+          [31m-[0m[0m "Name"      = "ca1-processor"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                             = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "Processor"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-processor"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tenancy                              = "default" [90m-> null[0m[0m
+      [31m-[0m[0m user_data_replace_on_change          = false [90m-> null[0m[0m
+      [31m-[0m[0m vpc_security_group_ids               = [
+          [31m-[0m[0m "sg-027593aab322946ce",
+        ] [90m-> null[0m[0m
+        [90m# (8 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m capacity_reservation_specification {
+          [31m-[0m[0m capacity_reservation_preference = "open" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m cpu_options {
+          [31m-[0m[0m core_count            = 1 [90m-> null[0m[0m
+          [31m-[0m[0m threads_per_core      = 2 [90m-> null[0m[0m
+            [90m# (2 unchanged attributes hidden)[0m[0m
+        }
+
+      [31m-[0m[0m enclave_options {
+          [31m-[0m[0m enabled = false [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m maintenance_options {
+          [31m-[0m[0m auto_recovery = "default" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m metadata_options {
+          [31m-[0m[0m http_endpoint               = "enabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_protocol_ipv6          = "disabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_put_response_hop_limit = 2 [90m-> null[0m[0m
+          [31m-[0m[0m http_tokens                 = "required" [90m-> null[0m[0m
+          [31m-[0m[0m instance_metadata_tags      = "disabled" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m primary_network_interface {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m network_interface_id  = "eni-0f30eb37426aecec0" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m private_dns_name_options {
+          [31m-[0m[0m enable_resource_name_dns_a_record    = false [90m-> null[0m[0m
+          [31m-[0m[0m enable_resource_name_dns_aaaa_record = false [90m-> null[0m[0m
+          [31m-[0m[0m hostname_type                        = "ip-name" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m root_block_device {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m device_name           = "/dev/sda1" [90m-> null[0m[0m
+          [31m-[0m[0m encrypted             = true [90m-> null[0m[0m
+          [31m-[0m[0m iops                  = 3000 [90m-> null[0m[0m
+          [31m-[0m[0m kms_key_id            = "arn:aws:kms:us-east-2:913210542757:key/97205804-60a4-4a7a-83d8-e94be73659c1" [90m-> null[0m[0m
+          [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
+          [31m-[0m[0m tags_all              = {
+              [31m-[0m[0m "Assignment" = "CA1"
+              [31m-[0m[0m "ManagedBy"  = "Terraform"
+              [31m-[0m[0m "Project"    = "CS5287-CA1"
+            } [90m-> null[0m[0m
+          [31m-[0m[0m throughput            = 125 [90m-> null[0m[0m
+          [31m-[0m[0m volume_id             = "vol-0d3ceb03a15f11df0" [90m-> null[0m[0m
+          [31m-[0m[0m volume_size           = 8 [90m-> null[0m[0m
+          [31m-[0m[0m volume_type           = "gp3" [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_instance.producer[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_instance" "producer" {
+      [31m-[0m[0m ami                                  = "ami-00adec9774170bad2" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-2:913210542757:instance/i-0f8fc13ad21495bdd" [90m-> null[0m[0m
+      [31m-[0m[0m associate_public_ip_address          = true [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone                    = "us-east-2b" [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_stop                     = false [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_termination              = false [90m-> null[0m[0m
+      [31m-[0m[0m ebs_optimized                        = false [90m-> null[0m[0m
+      [31m-[0m[0m force_destroy                        = false [90m-> null[0m[0m
+      [31m-[0m[0m get_password_data                    = false [90m-> null[0m[0m
+      [31m-[0m[0m hibernation                          = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                   = "i-0f8fc13ad21495bdd" [90m-> null[0m[0m
+      [31m-[0m[0m instance_initiated_shutdown_behavior = "stop" [90m-> null[0m[0m
+      [31m-[0m[0m instance_state                       = "running" [90m-> null[0m[0m
+      [31m-[0m[0m instance_type                        = "c7i-flex.large" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_address_count                   = 0 [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_addresses                       = [] [90m-> null[0m[0m
+      [31m-[0m[0m key_name                             = "ca1-key" [90m-> null[0m[0m
+      [31m-[0m[0m monitoring                           = false [90m-> null[0m[0m
+      [31m-[0m[0m placement_partition_number           = 0 [90m-> null[0m[0m
+      [31m-[0m[0m primary_network_interface_id         = "eni-09b708a721d6a5af9" [90m-> null[0m[0m
+      [31m-[0m[0m private_dns                          = "ip-10-10-1-37.us-east-2.compute.internal" [90m-> null[0m[0m
+      [31m-[0m[0m private_ip                           = "10.10.1.37" [90m-> null[0m[0m
+      [31m-[0m[0m public_dns                           = "ec2-3-133-91-91.us-east-2.compute.amazonaws.com" [90m-> null[0m[0m
+      [31m-[0m[0m public_ip                            = "3.133.91.91" [90m-> null[0m[0m
+      [31m-[0m[0m region                               = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m secondary_private_ips                = [] [90m-> null[0m[0m
+      [31m-[0m[0m security_groups                      = [] [90m-> null[0m[0m
+      [31m-[0m[0m source_dest_check                    = true [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id                            = "subnet-04828b0be44716668" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                 = {
+          [31m-[0m[0m "Component" = "Producer"
+          [31m-[0m[0m "Name"      = "ca1-producer"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                             = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "Producer"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-producer"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tenancy                              = "default" [90m-> null[0m[0m
+      [31m-[0m[0m user_data_replace_on_change          = false [90m-> null[0m[0m
+      [31m-[0m[0m vpc_security_group_ids               = [
+          [31m-[0m[0m "sg-0d5bc9d80ba429a1e",
+        ] [90m-> null[0m[0m
+        [90m# (8 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m capacity_reservation_specification {
+          [31m-[0m[0m capacity_reservation_preference = "open" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m cpu_options {
+          [31m-[0m[0m core_count            = 1 [90m-> null[0m[0m
+          [31m-[0m[0m threads_per_core      = 2 [90m-> null[0m[0m
+            [90m# (2 unchanged attributes hidden)[0m[0m
+        }
+
+      [31m-[0m[0m enclave_options {
+          [31m-[0m[0m enabled = false [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m maintenance_options {
+          [31m-[0m[0m auto_recovery = "default" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m metadata_options {
+          [31m-[0m[0m http_endpoint               = "enabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_protocol_ipv6          = "disabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_put_response_hop_limit = 2 [90m-> null[0m[0m
+          [31m-[0m[0m http_tokens                 = "required" [90m-> null[0m[0m
+          [31m-[0m[0m instance_metadata_tags      = "disabled" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m primary_network_interface {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m network_interface_id  = "eni-09b708a721d6a5af9" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m private_dns_name_options {
+          [31m-[0m[0m enable_resource_name_dns_a_record    = false [90m-> null[0m[0m
+          [31m-[0m[0m enable_resource_name_dns_aaaa_record = false [90m-> null[0m[0m
+          [31m-[0m[0m hostname_type                        = "ip-name" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m root_block_device {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m device_name           = "/dev/sda1" [90m-> null[0m[0m
+          [31m-[0m[0m encrypted             = true [90m-> null[0m[0m
+          [31m-[0m[0m iops                  = 3000 [90m-> null[0m[0m
+          [31m-[0m[0m kms_key_id            = "arn:aws:kms:us-east-2:913210542757:key/97205804-60a4-4a7a-83d8-e94be73659c1" [90m-> null[0m[0m
+          [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
+          [31m-[0m[0m tags_all              = {
+              [31m-[0m[0m "Assignment" = "CA1"
+              [31m-[0m[0m "ManagedBy"  = "Terraform"
+              [31m-[0m[0m "Project"    = "CS5287-CA1"
+            } [90m-> null[0m[0m
+          [31m-[0m[0m throughput            = 125 [90m-> null[0m[0m
+          [31m-[0m[0m volume_id             = "vol-07e14577c64dd2a77" [90m-> null[0m[0m
+          [31m-[0m[0m volume_size           = 8 [90m-> null[0m[0m
+          [31m-[0m[0m volume_type           = "gp3" [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_internet_gateway.ca1[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_internet_gateway" "ca1" {
+      [31m-[0m[0m arn      = "arn:aws:ec2:us-east-2:913210542757:internet-gateway/igw-0b75f047856a46dca" [90m-> null[0m[0m
+      [31m-[0m[0m id       = "igw-0b75f047856a46dca" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m region   = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m tags     = {
+          [31m-[0m[0m "Name" = "ca1-igw"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-igw"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id   = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+    }
+
+[1m  # aws_key_pair.ca1[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_key_pair" "ca1" {
+      [31m-[0m[0m arn             = "arn:aws:ec2:us-east-2:913210542757:key-pair/ca1-key" [90m-> null[0m[0m
+      [31m-[0m[0m fingerprint     = "Hn2IW11T2SE8SrNj8Tq/8ozBucOSj0kutfil+uHT7gE=" [90m-> null[0m[0m
+      [31m-[0m[0m id              = "ca1-key" [90m-> null[0m[0m
+      [31m-[0m[0m key_name        = "ca1-key" [90m-> null[0m[0m
+      [31m-[0m[0m key_pair_id     = "key-06566484699353f6e" [90m-> null[0m[0m
+      [31m-[0m[0m key_type        = "ed25519" [90m-> null[0m[0m
+      [31m-[0m[0m public_key      = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINMLPr0QF2mx9SaN8tKzjSyo3Kt1R2iDqTU1vZhyokB9 cs5287-ca1" [90m-> null[0m[0m
+      [31m-[0m[0m region          = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m tags            = {
+          [31m-[0m[0m "Name" = "ca1-key"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all        = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-key"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_route.internet_access[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_route" "internet_access" {
+      [31m-[0m[0m destination_cidr_block      = "0.0.0.0/0" [90m-> null[0m[0m
+      [31m-[0m[0m gateway_id                  = "igw-0b75f047856a46dca" [90m-> null[0m[0m
+      [31m-[0m[0m id                          = "r-rtb-0aee91eb02c29ad6d1080289494" [90m-> null[0m[0m
+      [31m-[0m[0m origin                      = "CreateRoute" [90m-> null[0m[0m
+      [31m-[0m[0m region                      = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m route_table_id              = "rtb-0aee91eb02c29ad6d" [90m-> null[0m[0m
+      [31m-[0m[0m state                       = "active" [90m-> null[0m[0m
+        [90m# (14 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_route_table.public[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_route_table" "public" {
+      [31m-[0m[0m arn              = "arn:aws:ec2:us-east-2:913210542757:route-table/rtb-0aee91eb02c29ad6d" [90m-> null[0m[0m
+      [31m-[0m[0m id               = "rtb-0aee91eb02c29ad6d" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id         = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m propagating_vgws = [] [90m-> null[0m[0m
+      [31m-[0m[0m region           = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m route            = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_block                 = "0.0.0.0/0"
+              [31m-[0m[0m gateway_id                 = "igw-0b75f047856a46dca"
+                [90m# (12 unchanged attributes hidden)[0m[0m
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m tags             = {
+          [31m-[0m[0m "Name" = "ca1-public-rt"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all         = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-public-rt"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id           = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+    }
+
+[1m  # aws_route_table_association.public[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_route_table_association" "public" {
+      [31m-[0m[0m id             = "rtbassoc-09e1bc899a2c47176" [90m-> null[0m[0m
+      [31m-[0m[0m region         = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m route_table_id = "rtb-0aee91eb02c29ad6d" [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id      = "subnet-04828b0be44716668" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_security_group.kafka[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_security_group" "kafka" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group/sg-0a69c016168bd6c13" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Security group for the CA1 Kafka broker" [90m-> null[0m[0m
+      [31m-[0m[0m egress                 = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "0.0.0.0/0",
+                ]
+              [31m-[0m[0m description      = "Allow Kafka outbound traffic"
+              [31m-[0m[0m from_port        = 0
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "-1"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 0
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-0a69c016168bd6c13" [90m-> null[0m[0m
+      [31m-[0m[0m ingress                = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "68.62.181.203/32",
+                ]
+              [31m-[0m[0m description      = "SSH from trusted administrator address"
+              [31m-[0m[0m from_port        = 22
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 22
+            },
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = []
+              [31m-[0m[0m description      = "Kafka traffic from Processor"
+              [31m-[0m[0m from_port        = 9092
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = [
+                  [31m-[0m[0m "sg-027593aab322946ce",
+                ]
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 9092
+            },
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = []
+              [31m-[0m[0m description      = "Kafka traffic from Producer"
+              [31m-[0m[0m from_port        = 9092
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = [
+                  [31m-[0m[0m "sg-0d5bc9d80ba429a1e",
+                ]
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 9092
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m name                   = "ca1-kafka-sg" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id               = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m revoke_rules_on_delete = false [90m-> null[0m[0m
+      [31m-[0m[0m tags                   = {
+          [31m-[0m[0m "Component" = "Kafka"
+          [31m-[0m[0m "Name"      = "ca1-kafka-sg"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "Kafka"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-kafka-sg"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_security_group.mongodb[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_security_group" "mongodb" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group/sg-0fa522b2013180c46" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Security group for the CA1 MongoDB database" [90m-> null[0m[0m
+      [31m-[0m[0m egress                 = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "0.0.0.0/0",
+                ]
+              [31m-[0m[0m description      = "Allow MongoDB outbound traffic"
+              [31m-[0m[0m from_port        = 0
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "-1"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 0
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-0fa522b2013180c46" [90m-> null[0m[0m
+      [31m-[0m[0m ingress                = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "68.62.181.203/32",
+                ]
+              [31m-[0m[0m description      = "SSH from trusted administrator address"
+              [31m-[0m[0m from_port        = 22
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 22
+            },
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = []
+              [31m-[0m[0m description      = "MongoDB traffic from Processor"
+              [31m-[0m[0m from_port        = 27017
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = [
+                  [31m-[0m[0m "sg-027593aab322946ce",
+                ]
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 27017
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m name                   = "ca1-mongodb-sg" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id               = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m revoke_rules_on_delete = false [90m-> null[0m[0m
+      [31m-[0m[0m tags                   = {
+          [31m-[0m[0m "Component" = "MongoDB"
+          [31m-[0m[0m "Name"      = "ca1-mongodb-sg"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "MongoDB"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-mongodb-sg"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_security_group.processor[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_security_group" "processor" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group/sg-027593aab322946ce" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Security group for the CA1 Processor and REST API" [90m-> null[0m[0m
+      [31m-[0m[0m egress                 = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "0.0.0.0/0",
+                ]
+              [31m-[0m[0m description      = "Allow Processor outbound traffic"
+              [31m-[0m[0m from_port        = 0
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "-1"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 0
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-027593aab322946ce" [90m-> null[0m[0m
+      [31m-[0m[0m ingress                = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "68.62.181.203/32",
+                ]
+              [31m-[0m[0m description      = "REST API access from trusted administrator address"
+              [31m-[0m[0m from_port        = 8080
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 8080
+            },
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "68.62.181.203/32",
+                ]
+              [31m-[0m[0m description      = "SSH from trusted administrator address"
+              [31m-[0m[0m from_port        = 22
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 22
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m name                   = "ca1-processor-sg" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id               = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m revoke_rules_on_delete = false [90m-> null[0m[0m
+      [31m-[0m[0m tags                   = {
+          [31m-[0m[0m "Component" = "Processor"
+          [31m-[0m[0m "Name"      = "ca1-processor-sg"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "Processor"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-processor-sg"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_security_group.producer[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_security_group" "producer" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group/sg-0d5bc9d80ba429a1e" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Security group for the CA1 Producer" [90m-> null[0m[0m
+      [31m-[0m[0m egress                 = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "0.0.0.0/0",
+                ]
+              [31m-[0m[0m description      = "Allow Producer outbound traffic"
+              [31m-[0m[0m from_port        = 0
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "-1"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 0
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-0d5bc9d80ba429a1e" [90m-> null[0m[0m
+      [31m-[0m[0m ingress                = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "68.62.181.203/32",
+                ]
+              [31m-[0m[0m description      = "SSH from trusted administrator address"
+              [31m-[0m[0m from_port        = 22
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 22
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m name                   = "ca1-producer-sg" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id               = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m revoke_rules_on_delete = false [90m-> null[0m[0m
+      [31m-[0m[0m tags                   = {
+          [31m-[0m[0m "Component" = "Producer"
+          [31m-[0m[0m "Name"      = "ca1-producer-sg"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "Producer"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-producer-sg"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_subnet.public[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_subnet" "public" {
+      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-2:913210542757:subnet/subnet-04828b0be44716668" [90m-> null[0m[0m
+      [31m-[0m[0m assign_ipv6_address_on_creation                = false [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone                              = "us-east-2b" [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone_id                           = "use2-az2" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_block                                     = "10.10.1.0/24" [90m-> null[0m[0m
+      [31m-[0m[0m enable_dns64                                   = false [90m-> null[0m[0m
+      [31m-[0m[0m enable_lni_at_device_index                     = 0 [90m-> null[0m[0m
+      [31m-[0m[0m enable_resource_name_dns_a_record_on_launch    = false [90m-> null[0m[0m
+      [31m-[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                             = "subnet-04828b0be44716668" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_native                                    = false [90m-> null[0m[0m
+      [31m-[0m[0m map_customer_owned_ip_on_launch                = false [90m-> null[0m[0m
+      [31m-[0m[0m map_public_ip_on_launch                        = true [90m-> null[0m[0m
+      [31m-[0m[0m owner_id                                       = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m private_dns_hostname_type_on_launch            = "ip-name" [90m-> null[0m[0m
+      [31m-[0m[0m region                                         = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                           = {
+          [31m-[0m[0m "Name" = "ca1-public-subnet"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                                       = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-public-subnet"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                                         = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+        [90m# (4 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_vpc.ca1[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc" "ca1" {
+      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-2:913210542757:vpc/vpc-0746b414e4ad43025" [90m-> null[0m[0m
+      [31m-[0m[0m assign_generated_ipv6_cidr_block     = false [90m-> null[0m[0m
+      [31m-[0m[0m cidr_block                           = "10.10.0.0/16" [90m-> null[0m[0m
+      [31m-[0m[0m default_network_acl_id               = "acl-01f5edc925bd771b2" [90m-> null[0m[0m
+      [31m-[0m[0m default_route_table_id               = "rtb-088d6dadd7fb9d23c" [90m-> null[0m[0m
+      [31m-[0m[0m default_security_group_id            = "sg-0ecbfb0ebebb892c1" [90m-> null[0m[0m
+      [31m-[0m[0m dhcp_options_id                      = "dopt-0b5e492ba7f32ee91" [90m-> null[0m[0m
+      [31m-[0m[0m enable_dns_hostnames                 = true [90m-> null[0m[0m
+      [31m-[0m[0m enable_dns_support                   = true [90m-> null[0m[0m
+      [31m-[0m[0m enable_network_address_usage_metrics = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                   = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+      [31m-[0m[0m instance_tenancy                     = "default" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_netmask_length                  = 0 [90m-> null[0m[0m
+      [31m-[0m[0m main_route_table_id                  = "rtb-088d6dadd7fb9d23c" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id                             = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m region                               = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                 = {
+          [31m-[0m[0m "Name" = "ca1-vpc"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                             = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-vpc"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+        [90m# (4 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.kafka_all_outbound[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_egress_rule" "kafka_all_outbound" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-0a4e1298aa4242639" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "0.0.0.0/0" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Allow Kafka outbound traffic" [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-0a4e1298aa4242639" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "-1" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-0a69c016168bd6c13" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-0a4e1298aa4242639" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.mongodb_all_outbound[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_egress_rule" "mongodb_all_outbound" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-0c2379fac4805e270" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "0.0.0.0/0" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Allow MongoDB outbound traffic" [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-0c2379fac4805e270" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "-1" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-0fa522b2013180c46" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-0c2379fac4805e270" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.processor_all_outbound[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_egress_rule" "processor_all_outbound" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-0b549ccb2fff38da4" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "0.0.0.0/0" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Allow Processor outbound traffic" [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-0b549ccb2fff38da4" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "-1" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-027593aab322946ce" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-0b549ccb2fff38da4" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.producer_all_outbound[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_egress_rule" "producer_all_outbound" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-0674e82ab61b9f0f8" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "0.0.0.0/0" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Allow Producer outbound traffic" [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-0674e82ab61b9f0f8" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "-1" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-0d5bc9d80ba429a1e" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-0674e82ab61b9f0f8" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.kafka_from_processor[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "kafka_from_processor" {
+      [31m-[0m[0m arn                          = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-05168a9ccf7ea7bcd" [90m-> null[0m[0m
+      [31m-[0m[0m description                  = "Kafka traffic from Processor" [90m-> null[0m[0m
+      [31m-[0m[0m from_port                    = 9092 [90m-> null[0m[0m
+      [31m-[0m[0m id                           = "sgr-05168a9ccf7ea7bcd" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol                  = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m referenced_security_group_id = "sg-027593aab322946ce" [90m-> null[0m[0m
+      [31m-[0m[0m region                       = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id            = "sg-0a69c016168bd6c13" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id       = "sgr-05168a9ccf7ea7bcd" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                     = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                      = 9092 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.kafka_from_producer[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "kafka_from_producer" {
+      [31m-[0m[0m arn                          = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-0f8709119d3ca04b7" [90m-> null[0m[0m
+      [31m-[0m[0m description                  = "Kafka traffic from Producer" [90m-> null[0m[0m
+      [31m-[0m[0m from_port                    = 9092 [90m-> null[0m[0m
+      [31m-[0m[0m id                           = "sgr-0f8709119d3ca04b7" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol                  = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m referenced_security_group_id = "sg-0d5bc9d80ba429a1e" [90m-> null[0m[0m
+      [31m-[0m[0m region                       = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id            = "sg-0a69c016168bd6c13" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id       = "sgr-0f8709119d3ca04b7" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                     = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                      = 9092 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.kafka_ssh[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "kafka_ssh" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-021ea47d8660f4da1" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "68.62.181.203/32" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "SSH from trusted administrator address" [90m-> null[0m[0m
+      [31m-[0m[0m from_port              = 22 [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-021ea47d8660f4da1" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-0a69c016168bd6c13" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-021ea47d8660f4da1" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                = 22 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.mongodb_from_processor[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "mongodb_from_processor" {
+      [31m-[0m[0m arn                          = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-029dbcbfdbcd2ec6f" [90m-> null[0m[0m
+      [31m-[0m[0m description                  = "MongoDB traffic from Processor" [90m-> null[0m[0m
+      [31m-[0m[0m from_port                    = 27017 [90m-> null[0m[0m
+      [31m-[0m[0m id                           = "sgr-029dbcbfdbcd2ec6f" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol                  = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m referenced_security_group_id = "sg-027593aab322946ce" [90m-> null[0m[0m
+      [31m-[0m[0m region                       = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id            = "sg-0fa522b2013180c46" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id       = "sgr-029dbcbfdbcd2ec6f" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                     = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                      = 27017 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.mongodb_ssh[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "mongodb_ssh" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-042ea3d2b30321fda" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "68.62.181.203/32" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "SSH from trusted administrator address" [90m-> null[0m[0m
+      [31m-[0m[0m from_port              = 22 [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-042ea3d2b30321fda" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-0fa522b2013180c46" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-042ea3d2b30321fda" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                = 22 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.processor_rest[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "processor_rest" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-038cbb4340a59ab65" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "68.62.181.203/32" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "REST API access from trusted administrator address" [90m-> null[0m[0m
+      [31m-[0m[0m from_port              = 8080 [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-038cbb4340a59ab65" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-027593aab322946ce" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-038cbb4340a59ab65" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                = 8080 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.processor_ssh[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "processor_ssh" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-057085c36f667aebb" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "68.62.181.203/32" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "SSH from trusted administrator address" [90m-> null[0m[0m
+      [31m-[0m[0m from_port              = 22 [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-057085c36f667aebb" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-027593aab322946ce" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-057085c36f667aebb" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                = 22 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.producer_ssh[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "producer_ssh" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-0d28b1d8ac82b6499" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "68.62.181.203/32" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "SSH from trusted administrator address" [90m-> null[0m[0m
+      [31m-[0m[0m from_port              = 22 [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-0d28b1d8ac82b6499" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-0d5bc9d80ba429a1e" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-0d28b1d8ac82b6499" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                = 22 [90m-> null[0m[0m
+    }
+
+[1mPlan:[0m [0m0 to add, 0 to change, 27 to destroy.
+
+Changes to Outputs:
+  [31m-[0m[0m kafka_bootstrap_server    = "10.10.1.5:9092" [90m-> null[0m[0m
+  [31m-[0m[0m kafka_private_ip          = "10.10.1.5" [90m-> null[0m[0m
+  [31m-[0m[0m kafka_public_ip           = "52.14.191.37" [90m-> null[0m[0m
+  [31m-[0m[0m kafka_topic               = "auth-events" [90m-> null[0m[0m
+  [31m-[0m[0m mongodb_ami_id            = "ami-0ea1cddefe0c4aed5" [90m-> null[0m[0m
+  [31m-[0m[0m mongodb_collection        = "security_events" [90m-> null[0m[0m
+  [31m-[0m[0m mongodb_connection_target = "10.10.1.146:27017" [90m-> null[0m[0m
+  [31m-[0m[0m mongodb_database          = "threat_monitor" [90m-> null[0m[0m
+  [31m-[0m[0m mongodb_private_ip        = "10.10.1.146" [90m-> null[0m[0m
+  [31m-[0m[0m mongodb_public_ip         = "3.131.119.125" [90m-> null[0m[0m
+  [31m-[0m[0m processor_private_ip      = "10.10.1.248" [90m-> null[0m[0m
+  [31m-[0m[0m processor_public_ip       = "3.137.139.10" [90m-> null[0m[0m
+  [31m-[0m[0m producer_private_ip       = "10.10.1.37" [90m-> null[0m[0m
+  [31m-[0m[0m producer_public_ip        = "3.133.91.91" [90m-> null[0m[0m
+  [31m-[0m[0m public_subnet_id          = "subnet-04828b0be44716668" [90m-> null[0m[0m
+  [31m-[0m[0m rest_api_base_url         = "http://3.137.139.10:8080" [90m-> null[0m[0m
+  [31m-[0m[0m ubuntu_ami_id             = "ami-00adec9774170bad2" [90m-> null[0m[0m
+  [31m-[0m[0m vpc_id                    = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+[90m
+─────────────────────────────────────────────────────────────────────────────[0m
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
+
+Continue with destruction? [y/N] [0m[1mdata.aws_ami.ubuntu: Reading...[0m[0m
+[0m[1maws_key_pair.ca1: Refreshing state... [id=ca1-key][0m
+[0m[1maws_vpc.ca1: Refreshing state... [id=vpc-0746b414e4ad43025][0m
+[0m[1mdata.aws_ami.ubuntu: Read complete after 0s [id=ami-00adec9774170bad2][0m
+[0m[1maws_internet_gateway.ca1: Refreshing state... [id=igw-0b75f047856a46dca][0m
+[0m[1maws_subnet.public: Refreshing state... [id=subnet-04828b0be44716668][0m
+[0m[1maws_route_table.public: Refreshing state... [id=rtb-0aee91eb02c29ad6d][0m
+[0m[1maws_security_group.producer: Refreshing state... [id=sg-0d5bc9d80ba429a1e][0m
+[0m[1maws_security_group.mongodb: Refreshing state... [id=sg-0fa522b2013180c46][0m
+[0m[1maws_security_group.processor: Refreshing state... [id=sg-027593aab322946ce][0m
+[0m[1maws_security_group.kafka: Refreshing state... [id=sg-0a69c016168bd6c13][0m
+[0m[1maws_route_table_association.public: Refreshing state... [id=rtbassoc-09e1bc899a2c47176][0m
+[0m[1maws_route.internet_access: Refreshing state... [id=r-rtb-0aee91eb02c29ad6d1080289494][0m
+[0m[1maws_vpc_security_group_egress_rule.producer_all_outbound: Refreshing state... [id=sgr-0674e82ab61b9f0f8][0m
+[0m[1maws_vpc_security_group_ingress_rule.producer_ssh: Refreshing state... [id=sgr-0d28b1d8ac82b6499][0m
+[0m[1maws_instance.producer: Refreshing state... [id=i-0f8fc13ad21495bdd][0m
+[0m[1maws_vpc_security_group_egress_rule.processor_all_outbound: Refreshing state... [id=sgr-0b549ccb2fff38da4][0m
+[0m[1maws_vpc_security_group_ingress_rule.processor_ssh: Refreshing state... [id=sgr-057085c36f667aebb][0m
+[0m[1maws_vpc_security_group_ingress_rule.processor_rest: Refreshing state... [id=sgr-038cbb4340a59ab65][0m
+[0m[1maws_instance.processor: Refreshing state... [id=i-07569ab45480ca67f][0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_from_processor: Refreshing state... [id=sgr-05168a9ccf7ea7bcd][0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_ssh: Refreshing state... [id=sgr-021ea47d8660f4da1][0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_from_producer: Refreshing state... [id=sgr-0f8709119d3ca04b7][0m
+[0m[1maws_vpc_security_group_egress_rule.kafka_all_outbound: Refreshing state... [id=sgr-0a4e1298aa4242639][0m
+[0m[1maws_instance.kafka: Refreshing state... [id=i-0c61a48f116d6fe2e][0m
+[0m[1maws_vpc_security_group_ingress_rule.mongodb_ssh: Refreshing state... [id=sgr-042ea3d2b30321fda][0m
+[0m[1maws_vpc_security_group_egress_rule.mongodb_all_outbound: Refreshing state... [id=sgr-0c2379fac4805e270][0m
+[0m[1maws_vpc_security_group_ingress_rule.mongodb_from_processor: Refreshing state... [id=sgr-029dbcbfdbcd2ec6f][0m
+[0m[1maws_instance.mongodb: Refreshing state... [id=i-06396b10d0044b96e][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [31m-[0m destroy[0m
+
+Terraform will perform the following actions:
+
+[1m  # aws_instance.kafka[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_instance" "kafka" {
+      [31m-[0m[0m ami                                  = "ami-00adec9774170bad2" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-2:913210542757:instance/i-0c61a48f116d6fe2e" [90m-> null[0m[0m
+      [31m-[0m[0m associate_public_ip_address          = true [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone                    = "us-east-2b" [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_stop                     = false [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_termination              = false [90m-> null[0m[0m
+      [31m-[0m[0m ebs_optimized                        = false [90m-> null[0m[0m
+      [31m-[0m[0m force_destroy                        = false [90m-> null[0m[0m
+      [31m-[0m[0m get_password_data                    = false [90m-> null[0m[0m
+      [31m-[0m[0m hibernation                          = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                   = "i-0c61a48f116d6fe2e" [90m-> null[0m[0m
+      [31m-[0m[0m instance_initiated_shutdown_behavior = "stop" [90m-> null[0m[0m
+      [31m-[0m[0m instance_state                       = "running" [90m-> null[0m[0m
+      [31m-[0m[0m instance_type                        = "c7i-flex.large" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_address_count                   = 0 [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_addresses                       = [] [90m-> null[0m[0m
+      [31m-[0m[0m key_name                             = "ca1-key" [90m-> null[0m[0m
+      [31m-[0m[0m monitoring                           = false [90m-> null[0m[0m
+      [31m-[0m[0m placement_partition_number           = 0 [90m-> null[0m[0m
+      [31m-[0m[0m primary_network_interface_id         = "eni-019b66991c74272d3" [90m-> null[0m[0m
+      [31m-[0m[0m private_dns                          = "ip-10-10-1-5.us-east-2.compute.internal" [90m-> null[0m[0m
+      [31m-[0m[0m private_ip                           = "10.10.1.5" [90m-> null[0m[0m
+      [31m-[0m[0m public_dns                           = "ec2-52-14-191-37.us-east-2.compute.amazonaws.com" [90m-> null[0m[0m
+      [31m-[0m[0m public_ip                            = "52.14.191.37" [90m-> null[0m[0m
+      [31m-[0m[0m region                               = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m secondary_private_ips                = [] [90m-> null[0m[0m
+      [31m-[0m[0m security_groups                      = [] [90m-> null[0m[0m
+      [31m-[0m[0m source_dest_check                    = true [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id                            = "subnet-04828b0be44716668" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                 = {
+          [31m-[0m[0m "Component" = "Kafka"
+          [31m-[0m[0m "Name"      = "ca1-kafka"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                             = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "Kafka"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-kafka"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tenancy                              = "default" [90m-> null[0m[0m
+      [31m-[0m[0m user_data_replace_on_change          = false [90m-> null[0m[0m
+      [31m-[0m[0m vpc_security_group_ids               = [
+          [31m-[0m[0m "sg-0a69c016168bd6c13",
+        ] [90m-> null[0m[0m
+        [90m# (8 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m capacity_reservation_specification {
+          [31m-[0m[0m capacity_reservation_preference = "open" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m cpu_options {
+          [31m-[0m[0m core_count            = 1 [90m-> null[0m[0m
+          [31m-[0m[0m threads_per_core      = 2 [90m-> null[0m[0m
+            [90m# (2 unchanged attributes hidden)[0m[0m
+        }
+
+      [31m-[0m[0m enclave_options {
+          [31m-[0m[0m enabled = false [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m maintenance_options {
+          [31m-[0m[0m auto_recovery = "default" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m metadata_options {
+          [31m-[0m[0m http_endpoint               = "enabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_protocol_ipv6          = "disabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_put_response_hop_limit = 2 [90m-> null[0m[0m
+          [31m-[0m[0m http_tokens                 = "required" [90m-> null[0m[0m
+          [31m-[0m[0m instance_metadata_tags      = "disabled" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m primary_network_interface {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m network_interface_id  = "eni-019b66991c74272d3" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m private_dns_name_options {
+          [31m-[0m[0m enable_resource_name_dns_a_record    = false [90m-> null[0m[0m
+          [31m-[0m[0m enable_resource_name_dns_aaaa_record = false [90m-> null[0m[0m
+          [31m-[0m[0m hostname_type                        = "ip-name" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m root_block_device {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m device_name           = "/dev/sda1" [90m-> null[0m[0m
+          [31m-[0m[0m encrypted             = true [90m-> null[0m[0m
+          [31m-[0m[0m iops                  = 3000 [90m-> null[0m[0m
+          [31m-[0m[0m kms_key_id            = "arn:aws:kms:us-east-2:913210542757:key/97205804-60a4-4a7a-83d8-e94be73659c1" [90m-> null[0m[0m
+          [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
+          [31m-[0m[0m tags_all              = {
+              [31m-[0m[0m "Assignment" = "CA1"
+              [31m-[0m[0m "ManagedBy"  = "Terraform"
+              [31m-[0m[0m "Project"    = "CS5287-CA1"
+            } [90m-> null[0m[0m
+          [31m-[0m[0m throughput            = 125 [90m-> null[0m[0m
+          [31m-[0m[0m volume_id             = "vol-0bf539e5f8e1ed3df" [90m-> null[0m[0m
+          [31m-[0m[0m volume_size           = 8 [90m-> null[0m[0m
+          [31m-[0m[0m volume_type           = "gp3" [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_instance.mongodb[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_instance" "mongodb" {
+      [31m-[0m[0m ami                                  = "ami-0ea1cddefe0c4aed5" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-2:913210542757:instance/i-06396b10d0044b96e" [90m-> null[0m[0m
+      [31m-[0m[0m associate_public_ip_address          = true [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone                    = "us-east-2b" [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_stop                     = false [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_termination              = false [90m-> null[0m[0m
+      [31m-[0m[0m ebs_optimized                        = false [90m-> null[0m[0m
+      [31m-[0m[0m force_destroy                        = false [90m-> null[0m[0m
+      [31m-[0m[0m get_password_data                    = false [90m-> null[0m[0m
+      [31m-[0m[0m hibernation                          = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                   = "i-06396b10d0044b96e" [90m-> null[0m[0m
+      [31m-[0m[0m instance_initiated_shutdown_behavior = "stop" [90m-> null[0m[0m
+      [31m-[0m[0m instance_state                       = "running" [90m-> null[0m[0m
+      [31m-[0m[0m instance_type                        = "c7i-flex.large" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_address_count                   = 0 [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_addresses                       = [] [90m-> null[0m[0m
+      [31m-[0m[0m key_name                             = "ca1-key" [90m-> null[0m[0m
+      [31m-[0m[0m monitoring                           = false [90m-> null[0m[0m
+      [31m-[0m[0m placement_partition_number           = 0 [90m-> null[0m[0m
+      [31m-[0m[0m primary_network_interface_id         = "eni-05fdd18f510078756" [90m-> null[0m[0m
+      [31m-[0m[0m private_dns                          = "ip-10-10-1-146.us-east-2.compute.internal" [90m-> null[0m[0m
+      [31m-[0m[0m private_ip                           = "10.10.1.146" [90m-> null[0m[0m
+      [31m-[0m[0m public_dns                           = "ec2-3-131-119-125.us-east-2.compute.amazonaws.com" [90m-> null[0m[0m
+      [31m-[0m[0m public_ip                            = "3.131.119.125" [90m-> null[0m[0m
+      [31m-[0m[0m region                               = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m secondary_private_ips                = [] [90m-> null[0m[0m
+      [31m-[0m[0m security_groups                      = [] [90m-> null[0m[0m
+      [31m-[0m[0m source_dest_check                    = true [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id                            = "subnet-04828b0be44716668" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                 = {
+          [31m-[0m[0m "Component" = "MongoDB"
+          [31m-[0m[0m "Name"      = "ca1-mongodb"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                             = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "MongoDB"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-mongodb"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tenancy                              = "default" [90m-> null[0m[0m
+      [31m-[0m[0m user_data_replace_on_change          = false [90m-> null[0m[0m
+      [31m-[0m[0m vpc_security_group_ids               = [
+          [31m-[0m[0m "sg-0fa522b2013180c46",
+        ] [90m-> null[0m[0m
+        [90m# (8 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m capacity_reservation_specification {
+          [31m-[0m[0m capacity_reservation_preference = "open" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m cpu_options {
+          [31m-[0m[0m core_count            = 1 [90m-> null[0m[0m
+          [31m-[0m[0m threads_per_core      = 2 [90m-> null[0m[0m
+            [90m# (2 unchanged attributes hidden)[0m[0m
+        }
+
+      [31m-[0m[0m enclave_options {
+          [31m-[0m[0m enabled = false [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m maintenance_options {
+          [31m-[0m[0m auto_recovery = "default" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m metadata_options {
+          [31m-[0m[0m http_endpoint               = "enabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_protocol_ipv6          = "disabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_put_response_hop_limit = 2 [90m-> null[0m[0m
+          [31m-[0m[0m http_tokens                 = "required" [90m-> null[0m[0m
+          [31m-[0m[0m instance_metadata_tags      = "disabled" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m primary_network_interface {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m network_interface_id  = "eni-05fdd18f510078756" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m private_dns_name_options {
+          [31m-[0m[0m enable_resource_name_dns_a_record    = false [90m-> null[0m[0m
+          [31m-[0m[0m enable_resource_name_dns_aaaa_record = false [90m-> null[0m[0m
+          [31m-[0m[0m hostname_type                        = "ip-name" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m root_block_device {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m device_name           = "/dev/sda1" [90m-> null[0m[0m
+          [31m-[0m[0m encrypted             = true [90m-> null[0m[0m
+          [31m-[0m[0m iops                  = 3000 [90m-> null[0m[0m
+          [31m-[0m[0m kms_key_id            = "arn:aws:kms:us-east-2:913210542757:key/97205804-60a4-4a7a-83d8-e94be73659c1" [90m-> null[0m[0m
+          [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
+          [31m-[0m[0m tags_all              = {
+              [31m-[0m[0m "Assignment" = "CA1"
+              [31m-[0m[0m "ManagedBy"  = "Terraform"
+              [31m-[0m[0m "Project"    = "CS5287-CA1"
+            } [90m-> null[0m[0m
+          [31m-[0m[0m throughput            = 125 [90m-> null[0m[0m
+          [31m-[0m[0m volume_id             = "vol-01be4142ca16dc85e" [90m-> null[0m[0m
+          [31m-[0m[0m volume_size           = 8 [90m-> null[0m[0m
+          [31m-[0m[0m volume_type           = "gp3" [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_instance.processor[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_instance" "processor" {
+      [31m-[0m[0m ami                                  = "ami-00adec9774170bad2" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-2:913210542757:instance/i-07569ab45480ca67f" [90m-> null[0m[0m
+      [31m-[0m[0m associate_public_ip_address          = true [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone                    = "us-east-2b" [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_stop                     = false [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_termination              = false [90m-> null[0m[0m
+      [31m-[0m[0m ebs_optimized                        = false [90m-> null[0m[0m
+      [31m-[0m[0m force_destroy                        = false [90m-> null[0m[0m
+      [31m-[0m[0m get_password_data                    = false [90m-> null[0m[0m
+      [31m-[0m[0m hibernation                          = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                   = "i-07569ab45480ca67f" [90m-> null[0m[0m
+      [31m-[0m[0m instance_initiated_shutdown_behavior = "stop" [90m-> null[0m[0m
+      [31m-[0m[0m instance_state                       = "running" [90m-> null[0m[0m
+      [31m-[0m[0m instance_type                        = "c7i-flex.large" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_address_count                   = 0 [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_addresses                       = [] [90m-> null[0m[0m
+      [31m-[0m[0m key_name                             = "ca1-key" [90m-> null[0m[0m
+      [31m-[0m[0m monitoring                           = false [90m-> null[0m[0m
+      [31m-[0m[0m placement_partition_number           = 0 [90m-> null[0m[0m
+      [31m-[0m[0m primary_network_interface_id         = "eni-0f30eb37426aecec0" [90m-> null[0m[0m
+      [31m-[0m[0m private_dns                          = "ip-10-10-1-248.us-east-2.compute.internal" [90m-> null[0m[0m
+      [31m-[0m[0m private_ip                           = "10.10.1.248" [90m-> null[0m[0m
+      [31m-[0m[0m public_dns                           = "ec2-3-137-139-10.us-east-2.compute.amazonaws.com" [90m-> null[0m[0m
+      [31m-[0m[0m public_ip                            = "3.137.139.10" [90m-> null[0m[0m
+      [31m-[0m[0m region                               = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m secondary_private_ips                = [] [90m-> null[0m[0m
+      [31m-[0m[0m security_groups                      = [] [90m-> null[0m[0m
+      [31m-[0m[0m source_dest_check                    = true [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id                            = "subnet-04828b0be44716668" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                 = {
+          [31m-[0m[0m "Component" = "Processor"
+          [31m-[0m[0m "Name"      = "ca1-processor"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                             = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "Processor"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-processor"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tenancy                              = "default" [90m-> null[0m[0m
+      [31m-[0m[0m user_data_replace_on_change          = false [90m-> null[0m[0m
+      [31m-[0m[0m vpc_security_group_ids               = [
+          [31m-[0m[0m "sg-027593aab322946ce",
+        ] [90m-> null[0m[0m
+        [90m# (8 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m capacity_reservation_specification {
+          [31m-[0m[0m capacity_reservation_preference = "open" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m cpu_options {
+          [31m-[0m[0m core_count            = 1 [90m-> null[0m[0m
+          [31m-[0m[0m threads_per_core      = 2 [90m-> null[0m[0m
+            [90m# (2 unchanged attributes hidden)[0m[0m
+        }
+
+      [31m-[0m[0m enclave_options {
+          [31m-[0m[0m enabled = false [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m maintenance_options {
+          [31m-[0m[0m auto_recovery = "default" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m metadata_options {
+          [31m-[0m[0m http_endpoint               = "enabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_protocol_ipv6          = "disabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_put_response_hop_limit = 2 [90m-> null[0m[0m
+          [31m-[0m[0m http_tokens                 = "required" [90m-> null[0m[0m
+          [31m-[0m[0m instance_metadata_tags      = "disabled" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m primary_network_interface {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m network_interface_id  = "eni-0f30eb37426aecec0" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m private_dns_name_options {
+          [31m-[0m[0m enable_resource_name_dns_a_record    = false [90m-> null[0m[0m
+          [31m-[0m[0m enable_resource_name_dns_aaaa_record = false [90m-> null[0m[0m
+          [31m-[0m[0m hostname_type                        = "ip-name" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m root_block_device {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m device_name           = "/dev/sda1" [90m-> null[0m[0m
+          [31m-[0m[0m encrypted             = true [90m-> null[0m[0m
+          [31m-[0m[0m iops                  = 3000 [90m-> null[0m[0m
+          [31m-[0m[0m kms_key_id            = "arn:aws:kms:us-east-2:913210542757:key/97205804-60a4-4a7a-83d8-e94be73659c1" [90m-> null[0m[0m
+          [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
+          [31m-[0m[0m tags_all              = {
+              [31m-[0m[0m "Assignment" = "CA1"
+              [31m-[0m[0m "ManagedBy"  = "Terraform"
+              [31m-[0m[0m "Project"    = "CS5287-CA1"
+            } [90m-> null[0m[0m
+          [31m-[0m[0m throughput            = 125 [90m-> null[0m[0m
+          [31m-[0m[0m volume_id             = "vol-0d3ceb03a15f11df0" [90m-> null[0m[0m
+          [31m-[0m[0m volume_size           = 8 [90m-> null[0m[0m
+          [31m-[0m[0m volume_type           = "gp3" [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_instance.producer[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_instance" "producer" {
+      [31m-[0m[0m ami                                  = "ami-00adec9774170bad2" [90m-> null[0m[0m
+      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-2:913210542757:instance/i-0f8fc13ad21495bdd" [90m-> null[0m[0m
+      [31m-[0m[0m associate_public_ip_address          = true [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone                    = "us-east-2b" [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_stop                     = false [90m-> null[0m[0m
+      [31m-[0m[0m disable_api_termination              = false [90m-> null[0m[0m
+      [31m-[0m[0m ebs_optimized                        = false [90m-> null[0m[0m
+      [31m-[0m[0m force_destroy                        = false [90m-> null[0m[0m
+      [31m-[0m[0m get_password_data                    = false [90m-> null[0m[0m
+      [31m-[0m[0m hibernation                          = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                   = "i-0f8fc13ad21495bdd" [90m-> null[0m[0m
+      [31m-[0m[0m instance_initiated_shutdown_behavior = "stop" [90m-> null[0m[0m
+      [31m-[0m[0m instance_state                       = "running" [90m-> null[0m[0m
+      [31m-[0m[0m instance_type                        = "c7i-flex.large" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_address_count                   = 0 [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_addresses                       = [] [90m-> null[0m[0m
+      [31m-[0m[0m key_name                             = "ca1-key" [90m-> null[0m[0m
+      [31m-[0m[0m monitoring                           = false [90m-> null[0m[0m
+      [31m-[0m[0m placement_partition_number           = 0 [90m-> null[0m[0m
+      [31m-[0m[0m primary_network_interface_id         = "eni-09b708a721d6a5af9" [90m-> null[0m[0m
+      [31m-[0m[0m private_dns                          = "ip-10-10-1-37.us-east-2.compute.internal" [90m-> null[0m[0m
+      [31m-[0m[0m private_ip                           = "10.10.1.37" [90m-> null[0m[0m
+      [31m-[0m[0m public_dns                           = "ec2-3-133-91-91.us-east-2.compute.amazonaws.com" [90m-> null[0m[0m
+      [31m-[0m[0m public_ip                            = "3.133.91.91" [90m-> null[0m[0m
+      [31m-[0m[0m region                               = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m secondary_private_ips                = [] [90m-> null[0m[0m
+      [31m-[0m[0m security_groups                      = [] [90m-> null[0m[0m
+      [31m-[0m[0m source_dest_check                    = true [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id                            = "subnet-04828b0be44716668" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                 = {
+          [31m-[0m[0m "Component" = "Producer"
+          [31m-[0m[0m "Name"      = "ca1-producer"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                             = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "Producer"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-producer"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tenancy                              = "default" [90m-> null[0m[0m
+      [31m-[0m[0m user_data_replace_on_change          = false [90m-> null[0m[0m
+      [31m-[0m[0m vpc_security_group_ids               = [
+          [31m-[0m[0m "sg-0d5bc9d80ba429a1e",
+        ] [90m-> null[0m[0m
+        [90m# (8 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m capacity_reservation_specification {
+          [31m-[0m[0m capacity_reservation_preference = "open" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m cpu_options {
+          [31m-[0m[0m core_count            = 1 [90m-> null[0m[0m
+          [31m-[0m[0m threads_per_core      = 2 [90m-> null[0m[0m
+            [90m# (2 unchanged attributes hidden)[0m[0m
+        }
+
+      [31m-[0m[0m enclave_options {
+          [31m-[0m[0m enabled = false [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m maintenance_options {
+          [31m-[0m[0m auto_recovery = "default" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m metadata_options {
+          [31m-[0m[0m http_endpoint               = "enabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_protocol_ipv6          = "disabled" [90m-> null[0m[0m
+          [31m-[0m[0m http_put_response_hop_limit = 2 [90m-> null[0m[0m
+          [31m-[0m[0m http_tokens                 = "required" [90m-> null[0m[0m
+          [31m-[0m[0m instance_metadata_tags      = "disabled" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m primary_network_interface {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m network_interface_id  = "eni-09b708a721d6a5af9" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m private_dns_name_options {
+          [31m-[0m[0m enable_resource_name_dns_a_record    = false [90m-> null[0m[0m
+          [31m-[0m[0m enable_resource_name_dns_aaaa_record = false [90m-> null[0m[0m
+          [31m-[0m[0m hostname_type                        = "ip-name" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m root_block_device {
+          [31m-[0m[0m delete_on_termination = true [90m-> null[0m[0m
+          [31m-[0m[0m device_name           = "/dev/sda1" [90m-> null[0m[0m
+          [31m-[0m[0m encrypted             = true [90m-> null[0m[0m
+          [31m-[0m[0m iops                  = 3000 [90m-> null[0m[0m
+          [31m-[0m[0m kms_key_id            = "arn:aws:kms:us-east-2:913210542757:key/97205804-60a4-4a7a-83d8-e94be73659c1" [90m-> null[0m[0m
+          [31m-[0m[0m tags                  = {} [90m-> null[0m[0m
+          [31m-[0m[0m tags_all              = {
+              [31m-[0m[0m "Assignment" = "CA1"
+              [31m-[0m[0m "ManagedBy"  = "Terraform"
+              [31m-[0m[0m "Project"    = "CS5287-CA1"
+            } [90m-> null[0m[0m
+          [31m-[0m[0m throughput            = 125 [90m-> null[0m[0m
+          [31m-[0m[0m volume_id             = "vol-07e14577c64dd2a77" [90m-> null[0m[0m
+          [31m-[0m[0m volume_size           = 8 [90m-> null[0m[0m
+          [31m-[0m[0m volume_type           = "gp3" [90m-> null[0m[0m
+        }
+    }
+
+[1m  # aws_internet_gateway.ca1[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_internet_gateway" "ca1" {
+      [31m-[0m[0m arn      = "arn:aws:ec2:us-east-2:913210542757:internet-gateway/igw-0b75f047856a46dca" [90m-> null[0m[0m
+      [31m-[0m[0m id       = "igw-0b75f047856a46dca" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m region   = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m tags     = {
+          [31m-[0m[0m "Name" = "ca1-igw"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-igw"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id   = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+    }
+
+[1m  # aws_key_pair.ca1[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_key_pair" "ca1" {
+      [31m-[0m[0m arn             = "arn:aws:ec2:us-east-2:913210542757:key-pair/ca1-key" [90m-> null[0m[0m
+      [31m-[0m[0m fingerprint     = "Hn2IW11T2SE8SrNj8Tq/8ozBucOSj0kutfil+uHT7gE=" [90m-> null[0m[0m
+      [31m-[0m[0m id              = "ca1-key" [90m-> null[0m[0m
+      [31m-[0m[0m key_name        = "ca1-key" [90m-> null[0m[0m
+      [31m-[0m[0m key_pair_id     = "key-06566484699353f6e" [90m-> null[0m[0m
+      [31m-[0m[0m key_type        = "ed25519" [90m-> null[0m[0m
+      [31m-[0m[0m public_key      = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINMLPr0QF2mx9SaN8tKzjSyo3Kt1R2iDqTU1vZhyokB9 cs5287-ca1" [90m-> null[0m[0m
+      [31m-[0m[0m region          = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m tags            = {
+          [31m-[0m[0m "Name" = "ca1-key"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all        = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-key"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_route.internet_access[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_route" "internet_access" {
+      [31m-[0m[0m destination_cidr_block      = "0.0.0.0/0" [90m-> null[0m[0m
+      [31m-[0m[0m gateway_id                  = "igw-0b75f047856a46dca" [90m-> null[0m[0m
+      [31m-[0m[0m id                          = "r-rtb-0aee91eb02c29ad6d1080289494" [90m-> null[0m[0m
+      [31m-[0m[0m origin                      = "CreateRoute" [90m-> null[0m[0m
+      [31m-[0m[0m region                      = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m route_table_id              = "rtb-0aee91eb02c29ad6d" [90m-> null[0m[0m
+      [31m-[0m[0m state                       = "active" [90m-> null[0m[0m
+        [90m# (14 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_route_table.public[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_route_table" "public" {
+      [31m-[0m[0m arn              = "arn:aws:ec2:us-east-2:913210542757:route-table/rtb-0aee91eb02c29ad6d" [90m-> null[0m[0m
+      [31m-[0m[0m id               = "rtb-0aee91eb02c29ad6d" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id         = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m propagating_vgws = [] [90m-> null[0m[0m
+      [31m-[0m[0m region           = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m route            = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_block                 = "0.0.0.0/0"
+              [31m-[0m[0m gateway_id                 = "igw-0b75f047856a46dca"
+                [90m# (12 unchanged attributes hidden)[0m[0m
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m tags             = {
+          [31m-[0m[0m "Name" = "ca1-public-rt"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all         = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-public-rt"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id           = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+    }
+
+[1m  # aws_route_table_association.public[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_route_table_association" "public" {
+      [31m-[0m[0m id             = "rtbassoc-09e1bc899a2c47176" [90m-> null[0m[0m
+      [31m-[0m[0m region         = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m route_table_id = "rtb-0aee91eb02c29ad6d" [90m-> null[0m[0m
+      [31m-[0m[0m subnet_id      = "subnet-04828b0be44716668" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_security_group.kafka[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_security_group" "kafka" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group/sg-0a69c016168bd6c13" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Security group for the CA1 Kafka broker" [90m-> null[0m[0m
+      [31m-[0m[0m egress                 = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "0.0.0.0/0",
+                ]
+              [31m-[0m[0m description      = "Allow Kafka outbound traffic"
+              [31m-[0m[0m from_port        = 0
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "-1"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 0
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-0a69c016168bd6c13" [90m-> null[0m[0m
+      [31m-[0m[0m ingress                = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "68.62.181.203/32",
+                ]
+              [31m-[0m[0m description      = "SSH from trusted administrator address"
+              [31m-[0m[0m from_port        = 22
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 22
+            },
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = []
+              [31m-[0m[0m description      = "Kafka traffic from Processor"
+              [31m-[0m[0m from_port        = 9092
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = [
+                  [31m-[0m[0m "sg-027593aab322946ce",
+                ]
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 9092
+            },
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = []
+              [31m-[0m[0m description      = "Kafka traffic from Producer"
+              [31m-[0m[0m from_port        = 9092
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = [
+                  [31m-[0m[0m "sg-0d5bc9d80ba429a1e",
+                ]
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 9092
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m name                   = "ca1-kafka-sg" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id               = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m revoke_rules_on_delete = false [90m-> null[0m[0m
+      [31m-[0m[0m tags                   = {
+          [31m-[0m[0m "Component" = "Kafka"
+          [31m-[0m[0m "Name"      = "ca1-kafka-sg"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "Kafka"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-kafka-sg"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_security_group.mongodb[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_security_group" "mongodb" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group/sg-0fa522b2013180c46" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Security group for the CA1 MongoDB database" [90m-> null[0m[0m
+      [31m-[0m[0m egress                 = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "0.0.0.0/0",
+                ]
+              [31m-[0m[0m description      = "Allow MongoDB outbound traffic"
+              [31m-[0m[0m from_port        = 0
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "-1"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 0
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-0fa522b2013180c46" [90m-> null[0m[0m
+      [31m-[0m[0m ingress                = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "68.62.181.203/32",
+                ]
+              [31m-[0m[0m description      = "SSH from trusted administrator address"
+              [31m-[0m[0m from_port        = 22
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 22
+            },
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = []
+              [31m-[0m[0m description      = "MongoDB traffic from Processor"
+              [31m-[0m[0m from_port        = 27017
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = [
+                  [31m-[0m[0m "sg-027593aab322946ce",
+                ]
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 27017
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m name                   = "ca1-mongodb-sg" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id               = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m revoke_rules_on_delete = false [90m-> null[0m[0m
+      [31m-[0m[0m tags                   = {
+          [31m-[0m[0m "Component" = "MongoDB"
+          [31m-[0m[0m "Name"      = "ca1-mongodb-sg"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "MongoDB"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-mongodb-sg"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_security_group.processor[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_security_group" "processor" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group/sg-027593aab322946ce" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Security group for the CA1 Processor and REST API" [90m-> null[0m[0m
+      [31m-[0m[0m egress                 = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "0.0.0.0/0",
+                ]
+              [31m-[0m[0m description      = "Allow Processor outbound traffic"
+              [31m-[0m[0m from_port        = 0
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "-1"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 0
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-027593aab322946ce" [90m-> null[0m[0m
+      [31m-[0m[0m ingress                = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "68.62.181.203/32",
+                ]
+              [31m-[0m[0m description      = "REST API access from trusted administrator address"
+              [31m-[0m[0m from_port        = 8080
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 8080
+            },
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "68.62.181.203/32",
+                ]
+              [31m-[0m[0m description      = "SSH from trusted administrator address"
+              [31m-[0m[0m from_port        = 22
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 22
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m name                   = "ca1-processor-sg" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id               = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m revoke_rules_on_delete = false [90m-> null[0m[0m
+      [31m-[0m[0m tags                   = {
+          [31m-[0m[0m "Component" = "Processor"
+          [31m-[0m[0m "Name"      = "ca1-processor-sg"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "Processor"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-processor-sg"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_security_group.producer[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_security_group" "producer" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group/sg-0d5bc9d80ba429a1e" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Security group for the CA1 Producer" [90m-> null[0m[0m
+      [31m-[0m[0m egress                 = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "0.0.0.0/0",
+                ]
+              [31m-[0m[0m description      = "Allow Producer outbound traffic"
+              [31m-[0m[0m from_port        = 0
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "-1"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 0
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sg-0d5bc9d80ba429a1e" [90m-> null[0m[0m
+      [31m-[0m[0m ingress                = [
+          [31m-[0m[0m {
+              [31m-[0m[0m cidr_blocks      = [
+                  [31m-[0m[0m "68.62.181.203/32",
+                ]
+              [31m-[0m[0m description      = "SSH from trusted administrator address"
+              [31m-[0m[0m from_port        = 22
+              [31m-[0m[0m ipv6_cidr_blocks = []
+              [31m-[0m[0m prefix_list_ids  = []
+              [31m-[0m[0m protocol         = "tcp"
+              [31m-[0m[0m security_groups  = []
+              [31m-[0m[0m self             = false
+              [31m-[0m[0m to_port          = 22
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m name                   = "ca1-producer-sg" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id               = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m revoke_rules_on_delete = false [90m-> null[0m[0m
+      [31m-[0m[0m tags                   = {
+          [31m-[0m[0m "Component" = "Producer"
+          [31m-[0m[0m "Name"      = "ca1-producer-sg"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "Component"  = "Producer"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-producer-sg"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                 = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+        [90m# (1 unchanged attribute hidden)[0m[0m
+    }
+
+[1m  # aws_subnet.public[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_subnet" "public" {
+      [31m-[0m[0m arn                                            = "arn:aws:ec2:us-east-2:913210542757:subnet/subnet-04828b0be44716668" [90m-> null[0m[0m
+      [31m-[0m[0m assign_ipv6_address_on_creation                = false [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone                              = "us-east-2b" [90m-> null[0m[0m
+      [31m-[0m[0m availability_zone_id                           = "use2-az2" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_block                                     = "10.10.1.0/24" [90m-> null[0m[0m
+      [31m-[0m[0m enable_dns64                                   = false [90m-> null[0m[0m
+      [31m-[0m[0m enable_lni_at_device_index                     = 0 [90m-> null[0m[0m
+      [31m-[0m[0m enable_resource_name_dns_a_record_on_launch    = false [90m-> null[0m[0m
+      [31m-[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                             = "subnet-04828b0be44716668" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_native                                    = false [90m-> null[0m[0m
+      [31m-[0m[0m map_customer_owned_ip_on_launch                = false [90m-> null[0m[0m
+      [31m-[0m[0m map_public_ip_on_launch                        = true [90m-> null[0m[0m
+      [31m-[0m[0m owner_id                                       = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m private_dns_hostname_type_on_launch            = "ip-name" [90m-> null[0m[0m
+      [31m-[0m[0m region                                         = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                           = {
+          [31m-[0m[0m "Name" = "ca1-public-subnet"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                                       = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-public-subnet"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m vpc_id                                         = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+        [90m# (4 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_vpc.ca1[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc" "ca1" {
+      [31m-[0m[0m arn                                  = "arn:aws:ec2:us-east-2:913210542757:vpc/vpc-0746b414e4ad43025" [90m-> null[0m[0m
+      [31m-[0m[0m assign_generated_ipv6_cidr_block     = false [90m-> null[0m[0m
+      [31m-[0m[0m cidr_block                           = "10.10.0.0/16" [90m-> null[0m[0m
+      [31m-[0m[0m default_network_acl_id               = "acl-01f5edc925bd771b2" [90m-> null[0m[0m
+      [31m-[0m[0m default_route_table_id               = "rtb-088d6dadd7fb9d23c" [90m-> null[0m[0m
+      [31m-[0m[0m default_security_group_id            = "sg-0ecbfb0ebebb892c1" [90m-> null[0m[0m
+      [31m-[0m[0m dhcp_options_id                      = "dopt-0b5e492ba7f32ee91" [90m-> null[0m[0m
+      [31m-[0m[0m enable_dns_hostnames                 = true [90m-> null[0m[0m
+      [31m-[0m[0m enable_dns_support                   = true [90m-> null[0m[0m
+      [31m-[0m[0m enable_network_address_usage_metrics = false [90m-> null[0m[0m
+      [31m-[0m[0m id                                   = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+      [31m-[0m[0m instance_tenancy                     = "default" [90m-> null[0m[0m
+      [31m-[0m[0m ipv6_netmask_length                  = 0 [90m-> null[0m[0m
+      [31m-[0m[0m main_route_table_id                  = "rtb-088d6dadd7fb9d23c" [90m-> null[0m[0m
+      [31m-[0m[0m owner_id                             = "913210542757" [90m-> null[0m[0m
+      [31m-[0m[0m region                               = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m tags                                 = {
+          [31m-[0m[0m "Name" = "ca1-vpc"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                             = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Name"       = "ca1-vpc"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+        [90m# (4 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.kafka_all_outbound[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_egress_rule" "kafka_all_outbound" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-0a4e1298aa4242639" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "0.0.0.0/0" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Allow Kafka outbound traffic" [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-0a4e1298aa4242639" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "-1" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-0a69c016168bd6c13" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-0a4e1298aa4242639" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.mongodb_all_outbound[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_egress_rule" "mongodb_all_outbound" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-0c2379fac4805e270" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "0.0.0.0/0" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Allow MongoDB outbound traffic" [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-0c2379fac4805e270" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "-1" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-0fa522b2013180c46" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-0c2379fac4805e270" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.processor_all_outbound[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_egress_rule" "processor_all_outbound" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-0b549ccb2fff38da4" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "0.0.0.0/0" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Allow Processor outbound traffic" [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-0b549ccb2fff38da4" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "-1" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-027593aab322946ce" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-0b549ccb2fff38da4" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_egress_rule.producer_all_outbound[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_egress_rule" "producer_all_outbound" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-0674e82ab61b9f0f8" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "0.0.0.0/0" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "Allow Producer outbound traffic" [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-0674e82ab61b9f0f8" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "-1" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-0d5bc9d80ba429a1e" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-0674e82ab61b9f0f8" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.kafka_from_processor[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "kafka_from_processor" {
+      [31m-[0m[0m arn                          = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-05168a9ccf7ea7bcd" [90m-> null[0m[0m
+      [31m-[0m[0m description                  = "Kafka traffic from Processor" [90m-> null[0m[0m
+      [31m-[0m[0m from_port                    = 9092 [90m-> null[0m[0m
+      [31m-[0m[0m id                           = "sgr-05168a9ccf7ea7bcd" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol                  = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m referenced_security_group_id = "sg-027593aab322946ce" [90m-> null[0m[0m
+      [31m-[0m[0m region                       = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id            = "sg-0a69c016168bd6c13" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id       = "sgr-05168a9ccf7ea7bcd" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                     = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                      = 9092 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.kafka_from_producer[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "kafka_from_producer" {
+      [31m-[0m[0m arn                          = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-0f8709119d3ca04b7" [90m-> null[0m[0m
+      [31m-[0m[0m description                  = "Kafka traffic from Producer" [90m-> null[0m[0m
+      [31m-[0m[0m from_port                    = 9092 [90m-> null[0m[0m
+      [31m-[0m[0m id                           = "sgr-0f8709119d3ca04b7" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol                  = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m referenced_security_group_id = "sg-0d5bc9d80ba429a1e" [90m-> null[0m[0m
+      [31m-[0m[0m region                       = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id            = "sg-0a69c016168bd6c13" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id       = "sgr-0f8709119d3ca04b7" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                     = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                      = 9092 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.kafka_ssh[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "kafka_ssh" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-021ea47d8660f4da1" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "68.62.181.203/32" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "SSH from trusted administrator address" [90m-> null[0m[0m
+      [31m-[0m[0m from_port              = 22 [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-021ea47d8660f4da1" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-0a69c016168bd6c13" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-021ea47d8660f4da1" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                = 22 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.mongodb_from_processor[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "mongodb_from_processor" {
+      [31m-[0m[0m arn                          = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-029dbcbfdbcd2ec6f" [90m-> null[0m[0m
+      [31m-[0m[0m description                  = "MongoDB traffic from Processor" [90m-> null[0m[0m
+      [31m-[0m[0m from_port                    = 27017 [90m-> null[0m[0m
+      [31m-[0m[0m id                           = "sgr-029dbcbfdbcd2ec6f" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol                  = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m referenced_security_group_id = "sg-027593aab322946ce" [90m-> null[0m[0m
+      [31m-[0m[0m region                       = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id            = "sg-0fa522b2013180c46" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id       = "sgr-029dbcbfdbcd2ec6f" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all                     = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                      = 27017 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.mongodb_ssh[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "mongodb_ssh" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-042ea3d2b30321fda" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "68.62.181.203/32" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "SSH from trusted administrator address" [90m-> null[0m[0m
+      [31m-[0m[0m from_port              = 22 [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-042ea3d2b30321fda" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-0fa522b2013180c46" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-042ea3d2b30321fda" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                = 22 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.processor_rest[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "processor_rest" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-038cbb4340a59ab65" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "68.62.181.203/32" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "REST API access from trusted administrator address" [90m-> null[0m[0m
+      [31m-[0m[0m from_port              = 8080 [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-038cbb4340a59ab65" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-027593aab322946ce" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-038cbb4340a59ab65" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                = 8080 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.processor_ssh[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "processor_ssh" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-057085c36f667aebb" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "68.62.181.203/32" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "SSH from trusted administrator address" [90m-> null[0m[0m
+      [31m-[0m[0m from_port              = 22 [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-057085c36f667aebb" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-027593aab322946ce" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-057085c36f667aebb" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                = 22 [90m-> null[0m[0m
+    }
+
+[1m  # aws_vpc_security_group_ingress_rule.producer_ssh[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "aws_vpc_security_group_ingress_rule" "producer_ssh" {
+      [31m-[0m[0m arn                    = "arn:aws:ec2:us-east-2:913210542757:security-group-rule/sgr-0d28b1d8ac82b6499" [90m-> null[0m[0m
+      [31m-[0m[0m cidr_ipv4              = "68.62.181.203/32" [90m-> null[0m[0m
+      [31m-[0m[0m description            = "SSH from trusted administrator address" [90m-> null[0m[0m
+      [31m-[0m[0m from_port              = 22 [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "sgr-0d28b1d8ac82b6499" [90m-> null[0m[0m
+      [31m-[0m[0m ip_protocol            = "tcp" [90m-> null[0m[0m
+      [31m-[0m[0m region                 = "us-east-2" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_id      = "sg-0d5bc9d80ba429a1e" [90m-> null[0m[0m
+      [31m-[0m[0m security_group_rule_id = "sgr-0d28b1d8ac82b6499" [90m-> null[0m[0m
+      [31m-[0m[0m tags_all               = {
+          [31m-[0m[0m "Assignment" = "CA1"
+          [31m-[0m[0m "ManagedBy"  = "Terraform"
+          [31m-[0m[0m "Project"    = "CS5287-CA1"
+        } [90m-> null[0m[0m
+      [31m-[0m[0m to_port                = 22 [90m-> null[0m[0m
+    }
+
+[1mPlan:[0m [0m0 to add, 0 to change, 27 to destroy.
+
+Changes to Outputs:
+  [31m-[0m[0m kafka_bootstrap_server    = "10.10.1.5:9092" [90m-> null[0m[0m
+  [31m-[0m[0m kafka_private_ip          = "10.10.1.5" [90m-> null[0m[0m
+  [31m-[0m[0m kafka_public_ip           = "52.14.191.37" [90m-> null[0m[0m
+  [31m-[0m[0m kafka_topic               = "auth-events" [90m-> null[0m[0m
+  [31m-[0m[0m mongodb_ami_id            = "ami-0ea1cddefe0c4aed5" [90m-> null[0m[0m
+  [31m-[0m[0m mongodb_collection        = "security_events" [90m-> null[0m[0m
+  [31m-[0m[0m mongodb_connection_target = "10.10.1.146:27017" [90m-> null[0m[0m
+  [31m-[0m[0m mongodb_database          = "threat_monitor" [90m-> null[0m[0m
+  [31m-[0m[0m mongodb_private_ip        = "10.10.1.146" [90m-> null[0m[0m
+  [31m-[0m[0m mongodb_public_ip         = "3.131.119.125" [90m-> null[0m[0m
+  [31m-[0m[0m processor_private_ip      = "10.10.1.248" [90m-> null[0m[0m
+  [31m-[0m[0m processor_public_ip       = "3.137.139.10" [90m-> null[0m[0m
+  [31m-[0m[0m producer_private_ip       = "10.10.1.37" [90m-> null[0m[0m
+  [31m-[0m[0m producer_public_ip        = "3.133.91.91" [90m-> null[0m[0m
+  [31m-[0m[0m public_subnet_id          = "subnet-04828b0be44716668" [90m-> null[0m[0m
+  [31m-[0m[0m rest_api_base_url         = "http://3.137.139.10:8080" [90m-> null[0m[0m
+  [31m-[0m[0m ubuntu_ami_id             = "ami-00adec9774170bad2" [90m-> null[0m[0m
+  [31m-[0m[0m vpc_id                    = "vpc-0746b414e4ad43025" [90m-> null[0m[0m
+[0m[1maws_route_table_association.public: Destroying... [id=rtbassoc-09e1bc899a2c47176][0m[0m
+[0m[1maws_vpc_security_group_egress_rule.producer_all_outbound: Destroying... [id=sgr-0674e82ab61b9f0f8][0m[0m
+[0m[1maws_vpc_security_group_egress_rule.processor_all_outbound: Destroying... [id=sgr-0b549ccb2fff38da4][0m[0m
+[0m[1maws_route.internet_access: Destroying... [id=r-rtb-0aee91eb02c29ad6d1080289494][0m[0m
+[0m[1maws_vpc_security_group_egress_rule.kafka_all_outbound: Destroying... [id=sgr-0a4e1298aa4242639][0m[0m
+[0m[1maws_vpc_security_group_ingress_rule.processor_ssh: Destroying... [id=sgr-057085c36f667aebb][0m[0m
+[0m[1maws_vpc_security_group_egress_rule.mongodb_all_outbound: Destroying... [id=sgr-0c2379fac4805e270][0m[0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_from_producer: Destroying... [id=sgr-0f8709119d3ca04b7][0m[0m
+[0m[1maws_vpc_security_group_ingress_rule.mongodb_ssh: Destroying... [id=sgr-042ea3d2b30321fda][0m[0m
+[0m[1maws_instance.processor: Destroying... [id=i-07569ab45480ca67f][0m[0m
+[0m[1maws_route_table_association.public: Destruction complete after 0s[0m
+[0m[1maws_vpc_security_group_ingress_rule.processor_rest: Destroying... [id=sgr-038cbb4340a59ab65][0m[0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_from_producer: Destruction complete after 0s[0m
+[0m[1maws_vpc_security_group_egress_rule.processor_all_outbound: Destruction complete after 0s[0m
+[0m[1maws_vpc_security_group_egress_rule.producer_all_outbound: Destruction complete after 0s[0m
+[0m[1maws_vpc_security_group_ingress_rule.mongodb_ssh: Destruction complete after 0s[0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_ssh: Destroying... [id=sgr-021ea47d8660f4da1][0m[0m
+[0m[1maws_instance.producer: Destroying... [id=i-0f8fc13ad21495bdd][0m[0m
+[0m[1maws_vpc_security_group_egress_rule.kafka_all_outbound: Destruction complete after 0s[0m
+[0m[1maws_instance.kafka: Destroying... [id=i-0c61a48f116d6fe2e][0m[0m
+[0m[1maws_instance.mongodb: Destroying... [id=i-06396b10d0044b96e][0m[0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_from_processor: Destroying... [id=sgr-05168a9ccf7ea7bcd][0m[0m
+[0m[1maws_vpc_security_group_ingress_rule.processor_ssh: Destruction complete after 0s[0m
+[0m[1maws_vpc_security_group_ingress_rule.producer_ssh: Destroying... [id=sgr-0d28b1d8ac82b6499][0m[0m
+[0m[1maws_vpc_security_group_egress_rule.mongodb_all_outbound: Destruction complete after 0s[0m
+[0m[1maws_vpc_security_group_ingress_rule.mongodb_from_processor: Destroying... [id=sgr-029dbcbfdbcd2ec6f][0m[0m
+[0m[1maws_route.internet_access: Destruction complete after 0s[0m
+[0m[1maws_internet_gateway.ca1: Destroying... [id=igw-0b75f047856a46dca][0m[0m
+[0m[1maws_vpc_security_group_ingress_rule.processor_rest: Destruction complete after 1s[0m
+[0m[1maws_route_table.public: Destroying... [id=rtb-0aee91eb02c29ad6d][0m[0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_ssh: Destruction complete after 1s[0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_from_processor: Destruction complete after 1s[0m
+[0m[1maws_vpc_security_group_ingress_rule.mongodb_from_processor: Destruction complete after 1s[0m
+[0m[1maws_vpc_security_group_ingress_rule.producer_ssh: Destruction complete after 1s[0m
+[0m[1maws_route_table.public: Destruction complete after 0s[0m
+[0m[1maws_instance.processor: Still destroying... [id=i-07569ab45480ca67f, 00m10s elapsed][0m[0m
+[0m[1maws_instance.producer: Still destroying... [id=i-0f8fc13ad21495bdd, 00m10s elapsed][0m[0m
+[0m[1maws_instance.kafka: Still destroying... [id=i-0c61a48f116d6fe2e, 00m10s elapsed][0m[0m
+[0m[1maws_instance.mongodb: Still destroying... [id=i-06396b10d0044b96e, 00m10s elapsed][0m[0m
+[0m[1maws_internet_gateway.ca1: Still destroying... [id=igw-0b75f047856a46dca, 00m10s elapsed][0m[0m
+[0m[1maws_instance.processor: Still destroying... [id=i-07569ab45480ca67f, 00m20s elapsed][0m[0m
+[0m[1maws_instance.kafka: Destruction complete after 20s[0m
+[0m[1maws_security_group.kafka: Destroying... [id=sg-0a69c016168bd6c13][0m[0m
+[0m[1maws_instance.mongodb: Destruction complete after 20s[0m
+[0m[1maws_security_group.mongodb: Destroying... [id=sg-0fa522b2013180c46][0m[0m
+[0m[1maws_instance.producer: Still destroying... [id=i-0f8fc13ad21495bdd, 00m20s elapsed][0m[0m
+[0m[1maws_internet_gateway.ca1: Still destroying... [id=igw-0b75f047856a46dca, 00m20s elapsed][0m[0m
+[0m[1maws_security_group.kafka: Destruction complete after 1s[0m
+[0m[1maws_security_group.mongodb: Destruction complete after 1s[0m
+[0m[1maws_internet_gateway.ca1: Destruction complete after 28s[0m
+[0m[1maws_instance.processor: Still destroying... [id=i-07569ab45480ca67f, 00m30s elapsed][0m[0m
+[0m[1maws_instance.processor: Destruction complete after 30s[0m
+[0m[1maws_security_group.processor: Destroying... [id=sg-027593aab322946ce][0m[0m
+[0m[1maws_instance.producer: Destruction complete after 30s[0m
+[0m[1maws_key_pair.ca1: Destroying... [id=ca1-key][0m[0m
+[0m[1maws_subnet.public: Destroying... [id=subnet-04828b0be44716668][0m[0m
+[0m[1maws_security_group.producer: Destroying... [id=sg-0d5bc9d80ba429a1e][0m[0m
+[0m[1maws_key_pair.ca1: Destruction complete after 0s[0m
+[0m[1maws_security_group.processor: Destruction complete after 1s[0m
+[0m[1maws_subnet.public: Destruction complete after 1s[0m
+[0m[1maws_security_group.producer: Destruction complete after 1s[0m
+[0m[1maws_vpc.ca1: Destroying... [id=vpc-0746b414e4ad43025][0m[0m
+[0m[1maws_vpc.ca1: Destruction complete after 0s[0m
+[0m[1m[32m
+Destroy complete! Resources: 27 destroyed.[0m
+
+=== CA1 teardown completed successfully ===

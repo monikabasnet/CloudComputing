@@ -1,0 +1,52 @@
+---
+- name: Create MongoDB data directory
+  ansible.builtin.file:
+    path: /opt/ca1/mongodb/data
+    state: directory
+    owner: "999"
+    group: "999"
+    mode: "0750"
+  become: true
+
+- name: Run MongoDB container
+  community.docker.docker_container:
+    name: ca1-mongodb
+    image: "mongo:{{ mongodb_version }}"
+    state: started
+    restart_policy: unless-stopped
+    pull: missing
+
+    published_ports:
+      - "{{ mongodb_port }}:27017"
+
+    env:
+      MONGO_INITDB_ROOT_USERNAME: "{{ vault_mongodb_username }}"
+      MONGO_INITDB_ROOT_PASSWORD: "{{ vault_mongodb_password }}"
+
+    volumes:
+      - "/opt/ca1/mongodb/data:/data/db"
+
+  become: true
+  no_log: true
+
+- name: Wait for MongoDB port
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ mongodb_port }}"
+    delay: 2
+    timeout: 60
+
+- name: Verify MongoDB authentication
+  community.docker.docker_container_exec:
+    container: ca1-mongodb
+    command: >
+      mongosh
+      --quiet
+      --username {{ vault_mongodb_username }}
+      --password {{ vault_mongodb_password }}
+      --authenticationDatabase admin
+      --eval "db.adminCommand('ping')"
+  register: mongodb_ping
+  changed_when: false
+  become: true
+  no_log: true

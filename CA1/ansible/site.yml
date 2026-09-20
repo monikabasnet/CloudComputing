@@ -1,0 +1,36 @@
+---
+- name: Configure CA1 base infrastructure
+  hosts: all
+  become: true
+
+  roles:
+    - common
+    - docker
+
+- name: Configure CA1 MongoDB service
+  hosts: mongodb
+  become: true
+
+  roles:
+    - mongodb
+
+- name: Configure CA1 Kafka service
+  hosts: kafka
+  become: true
+
+  roles:
+    - kafka
+
+- name: Configure CA1 Processor and REST API
+  hosts: processor
+  become: true
+
+  roles:
+    - processor
+
+- name: Run CA1 authentication event Producer
+  hosts: producer
+  become: true
+
+  roles:
+    - producer
