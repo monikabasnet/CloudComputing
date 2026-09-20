@@ -1,0 +1,44 @@
+# Example Terraform variable overrides for CA1.
+# Copy this file to terraform.tfvars if you want to override defaults.
+#
+# Do NOT place passwords, AWS credentials, private keys,
+# or other secrets in this file.
+
+aws_region         = "us-east-2"
+project_name       = "ca1"
+instance_type      = "c7i-flex.large"
+
+vpc_cidr           = "10.10.0.0/16"
+public_subnet_cidr = "10.10.1.0/24"
+
+kafka_port         = 9092
+mongodb_port       = 27017
+rest_api_port      = 8080
+
+kafka_topic        = "auth-events"
+
+producer_image     = "ca1-auth-producer:1.0"
+processor_image    = "ca1-threat-processor:1.2"
+
+mongodb_version    = "8.0.29"
+kafka_version      = "4.3.1"
+
+ami_architecture = "x86_64"
+
+# Replace with the public IPv4 address of the machine
+# running Ansible. Keep the /32 suffix.
+admin_cidr = "203.0.113.10/32"
+
+
+# Path to the deployer's SSH PUBLIC key.
+# Never provide the private key here.
+ssh_public_key_path = "~/.ssh/ca1-key.pub"
+
+
+mongodb_database   = "threat_monitor"
+mongodb_collection = "security_events"
+
+
+# Known-good Ubuntu 24.04 LTS AMI recovered from the CA0 MongoDB VM.
+# AMI IDs are region-specific; this default is for us-east-2.
+mongodb_ami_id = "ami-0ea1cddefe0c4aed5"

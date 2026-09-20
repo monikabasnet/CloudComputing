@@ -1,0 +1,44 @@
+# Terraform working directory
+terraform/.terraform/
+
+# Terraform state
+terraform/*.tfstate
+terraform/*.tfstate.*
+
+# Terraform plans
+terraform/*.tfplan
+terraform/tfplan
+
+# Real variable files may contain local/sensitive configuration
+terraform/terraform.tfvars
+terraform/*.auto.tfvars
+
+# Terraform crash/debug files
+terraform/crash.log
+terraform/crash.*.log
+
+# SSH/private keys
+*.pem
+*.key
+
+# Plaintext secrets / environment files
+.env
+.env.*
+!.env.example
+
+# Ansible Vault password files
+.vault_pass
+vault-password.txt
+*.vault-pass
+
+# Generated inventory
+ansible/inventory.ini
+
+# Generated temporary files
+*.retry
+
+# macOS
+.DS_Store
+
+# CA1 logs may contain runtime/IP information
+logs/*.log

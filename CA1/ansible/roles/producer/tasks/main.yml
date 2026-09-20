@@ -1,0 +1,77 @@
+---
+- name: Create Producer application directory
+  ansible.builtin.file:
+    path: /opt/ca1/producer
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: "0750"
+  become: true
+
+- name: Copy Producer application files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/opt/ca1/producer/{{ item }}"
+    owner: ubuntu
+    group: ubuntu
+    mode: "0644"
+  loop:
+    - Dockerfile
+    - producer.py
+    - requirements.txt
+  register: producer_source
+
+- name: Build Producer Docker image
+  community.docker.docker_image:
+    name: "{{ producer_image }}"
+    source: build
+    build:
+      path: /opt/ca1/producer
+    force_source: "{{ producer_source.changed }}"
+  become: true
+
+- name: Run Producer smoke test
+  when: run_producer | default(false) | bool
+  block:
+    - name: Remove previous Producer container
+      community.docker.docker_container:
+        name: ca1-producer
+        state: absent
+      become: true
+
+    - name: Run Producer event publisher
+      community.docker.docker_container:
+        name: ca1-producer
+        image: "{{ producer_image }}"
+        state: started
+        detach: true
+        auto_remove: false
+        env:
+          KAFKA_BROKER: "{{ hostvars[groups['kafka'][0]]['ansible_facts']['default_ipv4']['address'] }}:{{ kafka_port }}"
+          KAFKA_TOPIC: "{{ kafka_topic }}"
+      become: true
+
+    - name: Wait for Producer container to finish
+      ansible.builtin.command:
+        cmd: docker wait ca1-producer
+      register: producer_exit_code
+      changed_when: false
+      become: true
+
+    - name: Verify Producer exited successfully
+      ansible.builtin.assert:
+        that:
+          - producer_exit_code.stdout | trim == "0"
+        fail_msg: "Producer container did not exit successfully."
+        success_msg: "Producer published an event successfully."
+
+    - name: Read Producer output
+      ansible.builtin.command:
+        cmd: docker logs ca1-producer
+      register: producer_logs
+      changed_when: false
+      become: true
+
+    - name: Show Producer publication result
+      ansible.builtin.debug:
+        var: producer_logs.stdout_lines

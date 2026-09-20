@@ -1,0 +1,68 @@
+---
+- name: Create Processor application directory
+  ansible.builtin.file:
+    path: /opt/ca1/processor
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: "0750"
+  become: true
+
+- name: Copy Processor application files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/opt/ca1/processor/{{ item }}"
+    owner: ubuntu
+    group: ubuntu
+    mode: "0644"
+  loop:
+    - Dockerfile
+    - processor.py
+    - requirements.txt
+  register: processor_source
+
+- name: Build Processor Docker image
+  community.docker.docker_image:
+    name: "{{ processor_image }}"
+    source: build
+    build:
+      path: /opt/ca1/processor
+    force_source: "{{ processor_source.changed }}"
+  become: true
+
+- name: Run Processor container
+  community.docker.docker_container:
+    name: ca1-processor
+    image: "{{ processor_image }}"
+    state: started
+    restart_policy: unless-stopped
+    recreate: "{{ processor_source.changed }}"
+
+    published_ports:
+      - "{{ rest_api_port }}:{{ rest_api_port }}"
+
+    env:
+      KAFKA_BROKER: "{{ hostvars[groups['kafka'][0]]['ansible_facts']['default_ipv4']['address'] }}:{{ kafka_port }}"
+      KAFKA_TOPIC: "{{ kafka_topic }}"
+      MONGODB_URI: "mongodb://{{ vault_mongodb_username | urlencode }}:{{ vault_mongodb_password | urlencode }}@{{ hostvars[groups['mongodb'][0]]['ansible_facts']['default_ipv4']['address'] }}:{{ mongodb_port }}/?authSource=admin"
+      MONGODB_DATABASE: "{{ mongodb_database }}"
+      MONGODB_COLLECTION: "{{ mongodb_collection }}"
+      API_PORT: "{{ rest_api_port | string }}"
+
+  become: true
+  no_log: true
+
+- name: Wait for Processor REST API
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ rest_api_port }}/health"
+    method: GET
+    status_code: 200
+    return_content: true
+  register: processor_health
+  retries: 20
+  delay: 3
+  until:
+    - processor_health.status == 200
+    - processor_health.json.status == "ok"
+    - processor_health.json.mongodb == "connected"
+  changed_when: false

@@ -1,0 +1,276 @@
+=== CA1 Automated Deployment ===
+[1/4] Initializing Terraform...
+[0m[1mInitializing the backend...[0m
+
+[0m[1mInitializing provider plugins...[0m
+- Reusing previous version of hashicorp/aws from the dependency lock file
+- Using previously-installed hashicorp/aws v6.65.0
+
+[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m
+[0m[32m
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.[0m
+[2/4] Applying AWS infrastructure...
+[0m[1mdata.aws_ami.ubuntu: Reading...[0m[0m
+[0m[1maws_key_pair.ca1: Refreshing state... [id=ca1-key][0m
+[0m[1maws_vpc.ca1: Refreshing state... [id=vpc-043c4633b79a2653c][0m
+[0m[1mdata.aws_ami.ubuntu: Read complete after 0s [id=ami-00adec9774170bad2][0m
+[0m[1maws_internet_gateway.ca1: Refreshing state... [id=igw-0a8dca1fcbbe83b56][0m
+[0m[1maws_security_group.processor: Refreshing state... [id=sg-070b142fcee63a371][0m
+[0m[1maws_route_table.public: Refreshing state... [id=rtb-0a84b6aca83a4803b][0m
+[0m[1maws_security_group.mongodb: Refreshing state... [id=sg-029ba8c4d91c1da66][0m
+[0m[1maws_subnet.public: Refreshing state... [id=subnet-0f3c89cb5dac4f039][0m
+[0m[1maws_security_group.kafka: Refreshing state... [id=sg-050d14c848845f4cf][0m
+[0m[1maws_security_group.producer: Refreshing state... [id=sg-067edcc55b18d8f8e][0m
+[0m[1maws_vpc_security_group_ingress_rule.processor_ssh: Refreshing state... [id=sgr-000c9ab59dd9653d9][0m
+[0m[1maws_vpc_security_group_ingress_rule.processor_rest: Refreshing state... [id=sgr-0d480fd2765f25af2][0m
+[0m[1maws_vpc_security_group_egress_rule.processor_all_outbound: Refreshing state... [id=sgr-0eb3f74a6ee7a2e86][0m
+[0m[1maws_vpc_security_group_egress_rule.kafka_all_outbound: Refreshing state... [id=sgr-006a0fbfc1b7e749f][0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_ssh: Refreshing state... [id=sgr-097ab346188d378d8][0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_from_processor: Refreshing state... [id=sgr-025d64cdd1a9c2572][0m
+[0m[1maws_route.internet_access: Refreshing state... [id=r-rtb-0a84b6aca83a4803b1080289494][0m
+[0m[1maws_vpc_security_group_egress_rule.producer_all_outbound: Refreshing state... [id=sgr-082c78b34239fabbc][0m
+[0m[1maws_vpc_security_group_ingress_rule.kafka_from_producer: Refreshing state... [id=sgr-035a36ae2ffefecd3][0m
+[0m[1maws_vpc_security_group_ingress_rule.producer_ssh: Refreshing state... [id=sgr-00aff36ed1843cf58][0m
+[0m[1maws_vpc_security_group_ingress_rule.mongodb_ssh: Refreshing state... [id=sgr-0c1769ca2dca71bf6][0m
+[0m[1maws_vpc_security_group_ingress_rule.mongodb_from_processor: Refreshing state... [id=sgr-09a3f8f226b81a082][0m
+[0m[1maws_vpc_security_group_egress_rule.mongodb_all_outbound: Refreshing state... [id=sgr-0a19cadb841ff733e][0m
+[0m[1maws_route_table_association.public: Refreshing state... [id=rtbassoc-0ddfed5995d080dfa][0m
+[0m[1maws_instance.kafka: Refreshing state... [id=i-00c8571dd79b86af1][0m
+[0m[1maws_instance.processor: Refreshing state... [id=i-0ce6cee12b3748f92][0m
+[0m[1maws_instance.producer: Refreshing state... [id=i-02dd459d43651db81][0m
+[0m[1maws_instance.mongodb: Refreshing state... [id=i-08791e8d1b0352075][0m
+
+[0m[1m[32mNo changes.[0m[1m Your infrastructure matches the configuration.[0m
+
+[0mTerraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
+[0m[1m[32m
+Apply complete! Resources: 0 added, 0 changed, 0 destroyed.[0m
+[0m[1m[32m
+Outputs:
+
+[0mkafka_bootstrap_server = "10.10.1.52:9092"
+kafka_private_ip = "10.10.1.52"
+kafka_public_ip = "3.133.149.117"
+kafka_topic = "auth-events"
+mongodb_ami_id = "ami-0ea1cddefe0c4aed5"
+mongodb_collection = "security_events"
+mongodb_connection_target = "10.10.1.115:27017"
+mongodb_database = "threat_monitor"
+mongodb_private_ip = "10.10.1.115"
+mongodb_public_ip = "3.149.250.158"
+processor_private_ip = "10.10.1.117"
+processor_public_ip = "18.219.252.199"
+producer_private_ip = "10.10.1.44"
+producer_public_ip = "3.15.29.198"
+public_subnet_id = "subnet-0f3c89cb5dac4f039"
+rest_api_base_url = "http://18.219.252.199:8080"
+ubuntu_ami_id = "ami-00adec9774170bad2"
+vpc_id = "vpc-043c4633b79a2653c"
+[3/4] Generating Ansible inventory...
+Generated Ansible inventory: /Users/monikabasnet/CloudComputing/CA1/ansible/inventory.ini
+[4/4] Configuring services with Ansible...
+
+PLAY [Configure CA1 base infrastructure] ***************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [ca1-mongodb]
+ok: [ca1-producer]
+ok: [ca1-processor]
+ok: [ca1-kafka]
+
+TASK [common : Update apt package cache] ***************************************
+changed: [ca1-producer]
+changed: [ca1-processor]
+changed: [ca1-kafka]
+changed: [ca1-mongodb]
+
+TASK [common : Install common system packages] *********************************
+ok: [ca1-producer]
+ok: [ca1-mongodb]
+ok: [ca1-processor]
+ok: [ca1-kafka]
+
+TASK [docker : Install Docker] *************************************************
+changed: [ca1-mongodb]
+changed: [ca1-processor]
+changed: [ca1-producer]
+changed: [ca1-kafka]
+
+TASK [docker : Install Python Docker SDK] **************************************
+changed: [ca1-mongodb]
+changed: [ca1-processor]
+changed: [ca1-producer]
+changed: [ca1-kafka]
+
+TASK [docker : Ensure Docker service is enabled and running] *******************
+ok: [ca1-producer]
+ok: [ca1-processor]
+ok: [ca1-mongodb]
+ok: [ca1-kafka]
+
+TASK [docker : Add Ubuntu user to Docker group] ********************************
+changed: [ca1-mongodb]
+changed: [ca1-producer]
+changed: [ca1-processor]
+changed: [ca1-kafka]
+
+PLAY [Configure CA1 MongoDB service] *******************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [ca1-mongodb]
+
+TASK [mongodb : Create MongoDB data directory] *********************************
+changed: [ca1-mongodb]
+
+TASK [mongodb : Run MongoDB container] *****************************************
+changed: [ca1-mongodb]
+
+TASK [mongodb : Wait for MongoDB port] *****************************************
+ok: [ca1-mongodb]
+
+TASK [mongodb : Verify MongoDB authentication] *********************************
+ok: [ca1-mongodb]
+
+PLAY [Configure CA1 Kafka service] *********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [ca1-kafka]
+
+TASK [kafka : Install OpenJDK 17] **********************************************
+changed: [ca1-kafka]
+
+TASK [kafka : Create Kafka system group] ***************************************
+changed: [ca1-kafka]
+
+TASK [kafka : Create Kafka system user] ****************************************
+changed: [ca1-kafka]
+
+TASK [kafka : Create Kafka directories] ****************************************
+changed: [ca1-kafka] => (item=/opt/kafka)
+changed: [ca1-kafka] => (item=/var/lib/kafka)
+
+TASK [kafka : Download Apache Kafka] *******************************************
+changed: [ca1-kafka]
+
+TASK [kafka : Extract Apache Kafka] ********************************************
+changed: [ca1-kafka]
+
+TASK [kafka : Configure Kafka KRaft server] ************************************
+changed: [ca1-kafka]
+
+TASK [kafka : Check whether Kafka storage is already formatted] ****************
+ok: [ca1-kafka]
+
+TASK [kafka : Format Kafka KRaft storage] **************************************
+changed: [ca1-kafka]
+
+TASK [kafka : Install Kafka systemd service] ***********************************
+changed: [ca1-kafka]
+
+TASK [kafka : Ensure Kafka is enabled and running] *****************************
+changed: [ca1-kafka]
+
+TASK [kafka : Wait for Kafka broker port] **************************************
+ok: [ca1-kafka]
+
+TASK [kafka : Check whether Kafka topic exists] ********************************
+ok: [ca1-kafka]
+
+TASK [kafka : Create Kafka topic] **********************************************
+changed: [ca1-kafka]
+
+RUNNING HANDLER [kafka : Reload systemd] ***************************************
+ok: [ca1-kafka]
+
+RUNNING HANDLER [kafka : Restart Kafka] ****************************************
+changed: [ca1-kafka]
+
+PLAY [Configure CA1 Processor and REST API] ************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [ca1-processor]
+
+TASK [processor : Create Processor application directory] **********************
+changed: [ca1-processor]
+
+TASK [processor : Copy Processor application files] ****************************
+changed: [ca1-processor] => (item=Dockerfile)
+changed: [ca1-processor] => (item=processor.py)
+changed: [ca1-processor] => (item=requirements.txt)
+
+TASK [processor : Build Processor Docker image] ********************************
+changed: [ca1-processor]
+
+TASK [processor : Run Processor container] *************************************
+changed: [ca1-processor]
+
+TASK [processor : Wait for Processor REST API] *********************************
+ok: [ca1-processor]
+
+PLAY [Run CA1 authentication event Producer] ***********************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [ca1-producer]
+
+TASK [producer : Create Producer application directory] ************************
+changed: [ca1-producer]
+
+TASK [producer : Copy Producer application files] ******************************
+changed: [ca1-producer] => (item=Dockerfile)
+changed: [ca1-producer] => (item=producer.py)
+changed: [ca1-producer] => (item=requirements.txt)
+
+TASK [producer : Build Producer Docker image] **********************************
+changed: [ca1-producer]
+
+TASK [producer : Remove previous Producer container] ***************************
+skipping: [ca1-producer]
+
+TASK [producer : Run Producer event publisher] *********************************
+skipping: [ca1-producer]
+
+TASK [producer : Wait for Producer container to finish] ************************
+skipping: [ca1-producer]
+
+TASK [producer : Verify Producer exited successfully] **************************
+skipping: [ca1-producer]
+
+TASK [producer : Read Producer output] *****************************************
+skipping: [ca1-producer]
+
+TASK [producer : Show Producer publication result] *****************************
+skipping: [ca1-producer]
+
+PLAY RECAP *********************************************************************
+ca1-kafka                  : ok=24   changed=16   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+ca1-mongodb                : ok=12   changed=6    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+ca1-processor              : ok=13   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+ca1-producer               : ok=11   changed=7    unreachable=0    failed=0    skipped=6    rescued=0    ignored=0   
+
+
+=== CA1 deployment completed successfully ===
+kafka_bootstrap_server = "10.10.1.52:9092"
+kafka_private_ip = "10.10.1.52"
+kafka_public_ip = "3.133.149.117"
+kafka_topic = "auth-events"
+mongodb_ami_id = "ami-0ea1cddefe0c4aed5"
+mongodb_collection = "security_events"
+mongodb_connection_target = "10.10.1.115:27017"
+mongodb_database = "threat_monitor"
+mongodb_private_ip = "10.10.1.115"
+mongodb_public_ip = "3.149.250.158"
+processor_private_ip = "10.10.1.117"
+processor_public_ip = "18.219.252.199"
+producer_private_ip = "10.10.1.44"
+producer_public_ip = "3.15.29.198"
+public_subnet_id = "subnet-0f3c89cb5dac4f039"
+rest_api_base_url = "http://18.219.252.199:8080"
+ubuntu_ami_id = "ami-00adec9774170bad2"
+vpc_id = "vpc-043c4633b79a2653c"

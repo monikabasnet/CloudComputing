@@ -1,0 +1,211 @@
+=== CA1 Pipeline Validation ===
+
+[1/4] Checking Ansible connectivity...
+ca1-processor | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+ca1-mongodb | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+ca1-producer | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+ca1-kafka | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+
+[2/4] Checking Processor REST API health...
+{"kafka_topic":"auth-events","mongodb":"connected","status":"ok"}
+
+
+[3/4] Publishing authentication event...
+
+PLAY [Configure CA1 base infrastructure] ***************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [ca1-processor]
+ok: [ca1-mongodb]
+ok: [ca1-kafka]
+ok: [ca1-producer]
+
+TASK [common : Update apt package cache] ***************************************
+ok: [ca1-mongodb]
+ok: [ca1-processor]
+ok: [ca1-kafka]
+ok: [ca1-producer]
+
+TASK [common : Install common system packages] *********************************
+ok: [ca1-mongodb]
+ok: [ca1-processor]
+ok: [ca1-kafka]
+ok: [ca1-producer]
+
+TASK [docker : Install Docker] *************************************************
+ok: [ca1-mongodb]
+ok: [ca1-processor]
+ok: [ca1-kafka]
+ok: [ca1-producer]
+
+TASK [docker : Install Python Docker SDK] **************************************
+ok: [ca1-mongodb]
+ok: [ca1-processor]
+ok: [ca1-kafka]
+ok: [ca1-producer]
+
+TASK [docker : Ensure Docker service is enabled and running] *******************
+ok: [ca1-processor]
+ok: [ca1-mongodb]
+ok: [ca1-producer]
+ok: [ca1-kafka]
+
+TASK [docker : Add Ubuntu user to Docker group] ********************************
+ok: [ca1-mongodb]
+ok: [ca1-processor]
+ok: [ca1-producer]
+ok: [ca1-kafka]
+
+PLAY [Configure CA1 MongoDB service] *******************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [ca1-mongodb]
+
+TASK [mongodb : Create MongoDB data directory] *********************************
+ok: [ca1-mongodb]
+
+TASK [mongodb : Run MongoDB container] *****************************************
+ok: [ca1-mongodb]
+
+TASK [mongodb : Wait for MongoDB port] *****************************************
+ok: [ca1-mongodb]
+
+TASK [mongodb : Verify MongoDB authentication] *********************************
+ok: [ca1-mongodb]
+
+PLAY [Configure CA1 Kafka service] *********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [ca1-kafka]
+
+TASK [kafka : Install OpenJDK 17] **********************************************
+ok: [ca1-kafka]
+
+TASK [kafka : Create Kafka system group] ***************************************
+ok: [ca1-kafka]
+
+TASK [kafka : Create Kafka system user] ****************************************
+ok: [ca1-kafka]
+
+TASK [kafka : Create Kafka directories] ****************************************
+ok: [ca1-kafka] => (item=/opt/kafka)
+ok: [ca1-kafka] => (item=/var/lib/kafka)
+
+TASK [kafka : Download Apache Kafka] *******************************************
+ok: [ca1-kafka]
+
+TASK [kafka : Extract Apache Kafka] ********************************************
+skipping: [ca1-kafka]
+
+TASK [kafka : Configure Kafka KRaft server] ************************************
+ok: [ca1-kafka]
+
+TASK [kafka : Check whether Kafka storage is already formatted] ****************
+ok: [ca1-kafka]
+
+TASK [kafka : Format Kafka KRaft storage] **************************************
+skipping: [ca1-kafka]
+
+TASK [kafka : Install Kafka systemd service] ***********************************
+ok: [ca1-kafka]
+
+TASK [kafka : Ensure Kafka is enabled and running] *****************************
+ok: [ca1-kafka]
+
+TASK [kafka : Wait for Kafka broker port] **************************************
+ok: [ca1-kafka]
+
+TASK [kafka : Check whether Kafka topic exists] ********************************
+ok: [ca1-kafka]
+
+TASK [kafka : Create Kafka topic] **********************************************
+skipping: [ca1-kafka]
+
+PLAY [Configure CA1 Processor and REST API] ************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [ca1-processor]
+
+TASK [processor : Create Processor application directory] **********************
+ok: [ca1-processor]
+
+TASK [processor : Copy Processor application files] ****************************
+ok: [ca1-processor] => (item=Dockerfile)
+ok: [ca1-processor] => (item=processor.py)
+ok: [ca1-processor] => (item=requirements.txt)
+
+TASK [processor : Build Processor Docker image] ********************************
+ok: [ca1-processor]
+
+TASK [processor : Run Processor container] *************************************
+ok: [ca1-processor]
+
+TASK [processor : Wait for Processor REST API] *********************************
+ok: [ca1-processor]
+
+PLAY [Run CA1 authentication event Producer] ***********************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [ca1-producer]
+
+TASK [producer : Create Producer application directory] ************************
+ok: [ca1-producer]
+
+TASK [producer : Copy Producer application files] ******************************
+ok: [ca1-producer] => (item=Dockerfile)
+ok: [ca1-producer] => (item=producer.py)
+ok: [ca1-producer] => (item=requirements.txt)
+
+TASK [producer : Build Producer Docker image] **********************************
+ok: [ca1-producer]
+
+TASK [producer : Remove previous Producer container] ***************************
+ok: [ca1-producer]
+
+TASK [producer : Run Producer event publisher] *********************************
+changed: [ca1-producer]
+
+TASK [producer : Wait for Producer container to finish] ************************
+ok: [ca1-producer]
+
+TASK [producer : Verify Producer exited successfully] **************************
+ok: [ca1-producer] => {
+    "changed": false,
+    "msg": "Producer published an event successfully."
+}
+
+TASK [producer : Read Producer output] *****************************************
+ok: [ca1-producer]
+
+TASK [producer : Show Producer publication result] *****************************
+ok: [ca1-producer] => {
+    "producer_logs.stdout_lines": [
+        "Published event: {'event_id': 'cc44089e-2f31-47eb-801b-777d22a4ee7b', 'username': 'alice', 'source_ip': '192.0.2.15', 'success': False, 'timestamp': '2026-09-20T16:47:21.658793+00:00'}",
+        "Kafka topic=auth-events, partition=0, offset=0"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+ca1-kafka                  : ok=19   changed=0    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+ca1-mongodb                : ok=12   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+ca1-processor              : ok=13   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+ca1-producer               : ok=17   changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+[4/4] Retrieving processed events...
+[{"event_id":"cc44089e-2f31-47eb-801b-777d22a4ee7b","failed_attempts":1,"source_ip":"192.0.2.15","status":"FAILED_LOGIN","success":false,"timestamp":"2026-09-20T16:47:21.658793+00:00","username":"alice"}]
+
+
+=== CA1 pipeline validation completed successfully ===
