@@ -12,6 +12,99 @@ The CA0 authentication-event threat-monitoring system has been converted from a 
 
 ---
 
+---
+## System Architecture
+
+The CA1 deployment uses Terraform for AWS infrastructure provisioning and Ansible for configuration management. The deployed application follows the Producer → Kafka → Processor → MongoDB pipeline, with the Processor also exposing the REST API.
+
+```mermaid
+flowchart LR
+
+    Admin["Deployment Workstation"]
+
+    subgraph Automation["Infrastructure as Code"]
+        TF["Terraform"]
+        INV["Generated<br/>Ansible Inventory"]
+        ANS["Ansible"]
+        VAULT["Ansible Vault"]
+    end
+
+    subgraph AWS["AWS us-east-2"]
+
+        subgraph VPC["CA1 VPC<br/>10.10.0.0/16"]
+
+            subgraph SUBNET["Public Subnet<br/>10.10.1.0/24"]
+
+                PROD["Producer EC2<br/>Docker + Python<br/>ca1-auth-producer:1.0"]
+
+                KAFKA["Kafka EC2<br/>Apache Kafka 4.3.1<br/>KRaft<br/>Topic: auth-events"]
+
+                PROC["Processor EC2<br/>Docker + Python + Flask<br/>ca1-threat-processor:1.2<br/>REST API :8080"]
+
+                MONGO["MongoDB EC2<br/>MongoDB 8.0.29<br/>threat_monitor<br/>security_events"]
+
+            end
+        end
+    end
+
+    CLIENT["REST Client<br/>validate.sh"]
+
+    Admin --> TF
+    Admin --> ANS
+
+    TF -->|"Creates AWS Infrastructure"| VPC
+    TF -->|"Terraform Outputs"| INV
+    INV --> ANS
+    VAULT -.->|"Encrypted Credentials"| ANS
+
+    ANS -.->|"Configures"| PROD
+    ANS -.->|"Configures"| KAFKA
+    ANS -.->|"Configures"| PROC
+    ANS -.->|"Configures"| MONGO
+
+    PROD -->|"Authentication Events<br/>TCP 9092"| KAFKA
+
+    KAFKA -->|"auth-events"| PROC
+
+    PROC -->|"Processed Events<br/>TCP 27017"| MONGO
+
+    CLIENT -->|"HTTP :8080<br/>/health<br/>/events<br/>/alerts"| PROC
+```
+
+### Application Data Flow
+
+```text
+Producer
+   |
+   | Authentication Events
+   | TCP 9092
+   v
+Kafka
+auth-events
+   |
+   v
+Processor
+   |
+   | Threat Classification
+   |
+   | 1-2 failures = FAILED_LOGIN
+   | 3-4 failures = SUSPICIOUS
+   | 5+ failures  = POSSIBLE_BRUTE_FORCE
+   |
+   | TCP 27017
+   v
+MongoDB
+   |
+   v
+REST API
+/health
+/events
+/alerts
+```
+
+
+---
+
 **Terraform** is used to provision AWS infrastructure, while **Ansible** is used to configure the EC2 instances and deploy the application services. Docker is used for application packaging, Apache Kafka is used for event streaming, MongoDB is used for persistent storage, and a Flask REST API is exposed by the Processor.
 
 Supporting Bash scripts are provided for deployment, inventory generation, validation, and teardown.
