@@ -8,7 +8,7 @@ The CA0 authentication-event threat-monitoring system has been converted from a 
 
 # Demo Video
 
-**Demo video:** `[ADD VIDEO LINK HERE]`
+**Demo video:** `[https://youtu.be/Q3H7868nlro]`
 
 ---
 
@@ -1431,6 +1431,599 @@ All screenshots are stored in the `evidence/` directory.
 - [34 – Post-redeploy validation](evidence/34-post-redeploy-validation.png)
 
 ---
+
+---
+
+# Quick Reproduction Guide
+
+The following sequence can be used to reproduce the CA1 environment on another machine.
+
+The deployment creates a new AWS environment; the original Terraform state, generated inventory, EC2 addresses, and private SSH key are not required.
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/monikabasnet/CloudComputing.git
+cd CloudComputing
+```
+
+If CA1 is being submitted on the `ca1-iac` branch:
+
+```bash
+git checkout ca1-iac
+```
+
+Enter the project:
+
+```bash
+cd CA1
+```
+
+---
+
+## 2. Verify Required Tools
+
+The machine must have Terraform, Ansible, AWS CLI, SSH, and Bash available.
+
+```bash
+terraform version
+ansible --version
+aws --version
+ssh -V
+bash --version
+```
+
+Terraform 1.6 or newer is required by this project.
+
+---
+
+## 3. Configure AWS Authentication
+
+AWS CLI must be authenticated using an IAM identity with permission to create and delete the AWS resources used by this project.
+
+Verify the current identity:
+
+```bash
+aws sts get-caller-identity
+```
+
+If a named AWS profile is being used:
+
+```bash
+export AWS_PROFILE=<your-profile-name>
+aws sts get-caller-identity
+```
+
+For example:
+
+```bash
+export AWS_PROFILE=ca1
+aws sts get-caller-identity
+```
+
+Do not place AWS credentials in this repository.
+
+---
+
+## 4. Create an SSH Key
+
+The default configuration expects:
+
+```text
+~/.ssh/ca1-key
+~/.ssh/ca1-key.pub
+```
+
+Create the key if it does not already exist:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/ca1-key
+```
+
+Protect the private key:
+
+```bash
+chmod 600 ~/.ssh/ca1-key
+```
+
+Verify both files:
+
+```bash
+ls -l ~/.ssh/ca1-key ~/.ssh/ca1-key.pub
+```
+
+The private key must never be committed to Git.
+
+---
+
+## 5. Create the Local Terraform Variables
+
+Copy the supplied example:
+
+```bash
+cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+```
+
+Find the public IPv4 address of the deployment workstation:
+
+```bash
+curl -4 https://checkip.amazonaws.com
+```
+
+Open:
+
+```text
+terraform/terraform.tfvars
+```
+
+and replace the example `admin_cidr` with the returned address followed by `/32`.
+
+For example:
+
+```hcl
+admin_cidr = "203.0.113.10/32"
+```
+
+The default SSH public-key location is:
+
+```hcl
+ssh_public_key_path = "~/.ssh/ca1-key.pub"
+```
+
+Change it only if a different SSH key is being used.
+
+The real `terraform.tfvars` file is excluded from Git.
+
+---
+
+## 6. Configure MongoDB Secrets
+
+MongoDB credentials are stored in the encrypted Ansible Vault file:
+
+```text
+ansible/group_vars/all/vault.yml
+```
+
+An authorized user who has the Vault password can inspect or edit it with:
+
+```bash
+ansible-vault edit ansible/group_vars/all/vault.yml
+```
+
+The encrypted file requires the following variables:
+
+```yaml
+vault_mongodb_username: "<mongodb-username>"
+vault_mongodb_password: "<mongodb-password>"
+```
+
+If reproducing the project independently without access to the original Vault password, create a new encrypted Vault file with the same variable names and choose new MongoDB credentials.
+
+For example:
+
+```bash
+ansible-vault create ansible/group_vars/all/vault.yml
+```
+
+Enter:
+
+```yaml
+---
+vault_mongodb_username: "ca1_admin"
+vault_mongodb_password: "<choose-a-strong-password>"
+```
+
+Save and close the editor.
+
+Remember the Vault password because Ansible will request it during deployment and validation.
+
+Do not store the Vault password in the repository.
+
+---
+
+## 7. Prepare the Scripts
+
+Make the automation scripts executable:
+
+```bash
+chmod +x scripts/*.sh
+```
+
+Check their Bash syntax:
+
+```bash
+bash -n scripts/deploy.sh
+bash -n scripts/destroy.sh
+bash -n scripts/generate-inventory.sh
+bash -n scripts/validate.sh
+```
+
+No output indicates successful Bash syntax validation.
+
+---
+
+## 8. Initialize Terraform
+
+Initialize the Terraform working directory:
+
+```bash
+terraform -chdir=terraform init
+```
+
+Validate the configuration:
+
+```bash
+terraform -chdir=terraform validate
+```
+
+Expected result:
+
+```text
+Success! The configuration is valid.
+```
+
+Review the proposed infrastructure before deployment:
+
+```bash
+terraform -chdir=terraform plan
+```
+
+---
+
+## 9. Deploy the Complete Environment
+
+From the `CA1` directory run:
+
+```bash
+./scripts/deploy.sh
+```
+
+Provide confirmation if Terraform requests approval.
+
+When prompted:
+
+```text
+Vault password:
+```
+
+enter the Ansible Vault password.
+
+The script performs:
+
+```text
+Terraform initialization
+        |
+        v
+AWS infrastructure provisioning
+        |
+        v
+Terraform output retrieval
+        |
+        v
+Ansible inventory generation
+        |
+        v
+Ansible host configuration
+        |
+        v
+Kafka + MongoDB + Processor + Producer
+```
+
+A successful deployment ends with:
+
+```text
+=== CA1 deployment completed successfully ===
+```
+
+The Ansible recap should report:
+
+```text
+unreachable=0
+failed=0
+```
+
+for all four hosts.
+
+---
+
+## 10. Display the New Environment
+
+Display all Terraform outputs:
+
+```bash
+terraform -chdir=terraform output
+```
+
+The deployment provides values including:
+
+```text
+producer_public_ip
+producer_private_ip
+
+kafka_public_ip
+kafka_private_ip
+kafka_bootstrap_server
+kafka_topic
+
+processor_public_ip
+processor_private_ip
+rest_api_base_url
+
+mongodb_public_ip
+mongodb_private_ip
+mongodb_connection_target
+mongodb_database
+mongodb_collection
+```
+
+These addresses are generated for the new deployment and are expected to differ from the addresses shown in the original CA1 screenshots.
+
+---
+
+## 11. Validate the Complete Pipeline
+
+Run the automated smoke test:
+
+```bash
+./scripts/validate.sh
+```
+
+Enter the Ansible Vault password when requested.
+
+The validation performs:
+
+```text
+Ansible connectivity
+        |
+        v
+REST health check
+        |
+        v
+Producer event
+        |
+        v
+Kafka auth-events
+        |
+        v
+Processor
+        |
+        v
+MongoDB
+        |
+        v
+REST /events
+```
+
+A successful run ends with:
+
+```text
+=== CA1 pipeline validation completed successfully ===
+```
+
+---
+
+## 12. Verify the REST API Manually
+
+Retrieve the generated REST API URL:
+
+```bash
+terraform -chdir=terraform output -raw rest_api_base_url
+```
+
+Check application health:
+
+```bash
+curl -s "$(terraform -chdir=terraform output -raw rest_api_base_url)/health" \
+  | python3 -m json.tool
+```
+
+Retrieve processed events:
+
+```bash
+curl -s "$(terraform -chdir=terraform output -raw rest_api_base_url)/events" \
+  | python3 -m json.tool
+```
+
+Retrieve threat alerts:
+
+```bash
+curl -s "$(terraform -chdir=terraform output -raw rest_api_base_url)/alerts" \
+  | python3 -m json.tool
+```
+
+---
+
+## 13. Verify Terraform Idempotency
+
+Run:
+
+```bash
+terraform -chdir=terraform plan
+```
+
+After the infrastructure has reached the declared state, Terraform should report:
+
+```text
+No changes. Your infrastructure matches the configuration.
+```
+
+The deployment script can also be executed again:
+
+```bash
+./scripts/deploy.sh
+```
+
+Terraform should not recreate infrastructure that already matches the configuration.
+
+---
+
+## 14. Destroy the Environment
+
+When testing is complete, remove the CA1 infrastructure:
+
+```bash
+./scripts/destroy.sh
+```
+
+Review the Terraform destroy plan before confirming the operation.
+
+During the validated CA1 lifecycle test, Terraform managed 27 resources.
+
+Allow the script to finish without interruption.
+
+A successful teardown ends with:
+
+```text
+Destroy complete!
+
+=== CA1 teardown completed successfully ===
+```
+
+---
+
+## 15. Verify Complete Teardown
+
+Check Terraform state:
+
+```bash
+echo "Terraform-managed CA1 resources remaining:"
+terraform -chdir=terraform state list
+```
+
+A successful complete teardown should return no managed resources.
+
+The AWS EC2 state can also be inspected with:
+
+```bash
+aws ec2 describe-instances \
+  --region us-east-2 \
+  --filters "Name=tag:Project,Values=CS5287-CA1" \
+  --query 'Reservations[].Instances[].{Name:Tags[?Key==`Name`]|[0].Value,State:State.Name,InstanceId:InstanceId}' \
+  --output table
+```
+
+Previously destroyed EC2 instances may remain visible temporarily with:
+
+```text
+terminated
+```
+
+They should not remain in the `running` state.
+
+---
+
+## Complete Command Sequence
+
+For reference, the normal reproduction workflow is:
+
+```bash
+# Clone
+git clone https://github.com/monikabasnet/CloudComputing.git
+cd CloudComputing
+git checkout ca1-iac
+cd CA1
+
+# Verify tools
+terraform version
+ansible --version
+aws --version
+
+# Select AWS credentials if a named profile is used
+export AWS_PROFILE=<your-profile-name>
+aws sts get-caller-identity
+
+# Create SSH key if required
+ssh-keygen -t ed25519 -f ~/.ssh/ca1-key
+chmod 600 ~/.ssh/ca1-key
+
+# Create local Terraform configuration
+cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+
+# Determine the administrator public IP
+curl -4 https://checkip.amazonaws.com
+
+# Edit terraform/terraform.tfvars and set admin_cidr=<PUBLIC_IP>/32
+
+# Configure the encrypted Vault if required
+ansible-vault edit ansible/group_vars/all/vault.yml
+
+# Prepare scripts
+chmod +x scripts/*.sh
+
+# Initialize and validate
+terraform -chdir=terraform init
+terraform -chdir=terraform validate
+terraform -chdir=terraform plan
+
+# Deploy
+./scripts/deploy.sh
+
+# Inspect
+terraform -chdir=terraform output
+
+# Validate
+./scripts/validate.sh
+
+# Test the REST API
+curl -s "$(terraform -chdir=terraform output -raw rest_api_base_url)/health" \
+  | python3 -m json.tool
+
+curl -s "$(terraform -chdir=terraform output -raw rest_api_base_url)/events" \
+  | python3 -m json.tool
+
+curl -s "$(terraform -chdir=terraform output -raw rest_api_base_url)/alerts" \
+  | python3 -m json.tool
+
+# Check Terraform consistency
+terraform -chdir=terraform plan
+
+# Destroy
+./scripts/destroy.sh
+
+# Verify teardown
+terraform -chdir=terraform state list
+```
+
+## Expected Successful Lifecycle
+
+```text
+Clone
+  |
+  v
+Configure local AWS + SSH + Vault settings
+  |
+  v
+Terraform validate
+  |
+  v
+./scripts/deploy.sh
+  |
+  v
+AWS infrastructure created
+  |
+  v
+Ansible configuration completed
+  |
+  v
+./scripts/validate.sh
+  |
+  v
+Producer -> Kafka -> Processor -> MongoDB -> REST
+  |
+  v
+Pipeline validation successful
+  |
+  v
+./scripts/destroy.sh
+  |
+  v
+Terraform-managed resources destroyed
+  |
+  v
+Empty Terraform state
+```
+
+A reproduction is considered successful when the infrastructure deploys without failed or unreachable Ansible hosts, the automated pipeline validation completes successfully, and the final teardown removes the Terraform-managed environment.
 
 
 # Reproducibility and Integrity Notes
