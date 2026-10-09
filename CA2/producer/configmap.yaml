@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: producer-config
+  namespace: ca2
+data:
+  KAFKA_BROKER: "kafka:9092"
+  KAFKA_TOPIC: "auth-events"
+  PRODUCE_INTERVAL: "1"
