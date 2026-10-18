@@ -119,6 +119,7 @@ CA2/
 │   └── statefulset.yaml
 │
 ├── mongodb/
+│   ├── secret.template.yaml
 │   ├── service.yaml
 │   ├── statefulset.yaml
 │   └── storageclass.yaml
@@ -129,6 +130,7 @@ CA2/
 │   ├── deployment.yaml
 │   ├── processor.py
 │   ├── requirements.txt
+│   ├── secret.template.yaml
 │   └── service.yaml
 │
 ├── producer/
@@ -149,7 +151,10 @@ CA2/
 │
 ├── scripts/
 │   ├── create-secrets.sh
-│   └── setup-cluster.sh
+│   ├── evidence.sh
+│   ├── scaling-test.sh
+│   ├── setup-cluster.sh
+│   └── smoke-test.sh
 │
 └── evidence/
     ├── 01-ca2-eks-iam-permissions.png
@@ -171,7 +176,52 @@ CA2/
 
 ---
 
-# 3. Kubernetes Platform
+# 3. Prerequisites
+
+Before deploying CA2, the following tools and access are required:
+
+- AWS CLI configured with the `ca2` profile
+- `eksctl`
+- `kubectl`
+- Docker Desktop / Docker Engine
+- Docker Buildx
+- GNU Make
+- Python 3
+- `envsubst` from GNU gettext
+- Access to the AWS account used for Amazon EKS and Amazon ECR
+- Permission to pull the private Producer and Processor images from Amazon ECR
+- A valid Kubernetes context after the EKS cluster is created
+
+Important versions used during CA2:
+
+| Component | Version |
+|---|---|
+| Amazon EKS / Kubernetes | 1.34 |
+| Apache Kafka | 4.3.1 |
+| MongoDB | 8.0.29 |
+| Python container base | 3.12 |
+
+Check local tool versions with:
+
+```bash
+aws --version
+eksctl version
+kubectl version --client
+docker --version
+```
+
+After creating the cluster, verify the Kubernetes context:
+
+```bash
+kubectl config current-context
+kubectl get nodes
+```
+
+The EBS CSI Pod Identity IAM prerequisite described later in this README must also be available before EBS volumes can be dynamically provisioned.
+
+---
+
+# 4. Kubernetes Platform
 
 The application runs on an Amazon EKS cluster.
 
@@ -184,7 +234,7 @@ The application runs on an Amazon EKS cluster.
 | Instance type | `t3.small` |
 | Kubernetes namespace | `ca2` |
 
-The cluster is defined in:
+The cluster definition is stored in:
 
 [`eks/cluster.yaml`](eks/cluster.yaml)
 
@@ -194,23 +244,21 @@ Create the cluster with:
 make -C CA2 cluster-up
 ```
 
-The cluster platform setup is automated through:
+Configure the cluster platform with:
 
 ```bash
 make -C CA2 cluster-setup
 ```
 
-This configures required EKS platform components such as the Pod Identity Agent, EBS CSI add-on, and VPC CNI NetworkPolicy support.
+The platform setup handles the supported EKS add-on configuration, including the Pod Identity Agent, EBS CSI add-on, and VPC CNI NetworkPolicy configuration.
 
----
-
-# 4. EKS Cluster Evidence
+## Cluster Evidence
 
 Three EKS worker nodes were successfully created and reached the `Ready` state.
 
 ![Three EKS worker nodes](evidence/02-eks-three-nodes.png)
 
-This was verified using:
+The cluster was validated using:
 
 ```bash
 kubectl get nodes -o wide
@@ -220,9 +268,9 @@ kubectl get nodes -o wide
 
 # 5. Container Images and Amazon ECR
 
-The Producer and Processor are packaged as Docker images.
+The Producer and Processor applications are packaged as Docker images.
 
-The development machine uses Apple Silicon while the EKS worker nodes use AMD64, so the application images were explicitly built for:
+The development machine uses Apple Silicon while the EKS worker nodes use AMD64, so the custom application images were explicitly built for:
 
 ```text
 linux/amd64
@@ -245,15 +293,17 @@ ca2-producer
 ca2-processor
 ```
 
-No AWS account-specific registry identifiers or credentials are stored in this README.
+The Kubernetes Deployment manifests reference the private ECR images and their required image tags.
+
+No AWS credentials are stored in this README.
 
 ---
 
 # 6. Producer
 
-The Producer generates authentication events continuously.
+The Producer continuously generates authentication events.
 
-Each event contains:
+Each event contains fields including:
 
 ```text
 event_id
@@ -278,17 +328,17 @@ The Producer runs as a Kubernetes Deployment:
 
 [`producer/deployment.yaml`](producer/deployment.yaml)
 
-This allows the Producer to be horizontally scaled.
+This allows multiple replicas and horizontal scaling.
+
+The final Producer manifest also contains a `wait-for-kafka` init container. This prevents the application container from starting until `kafka:9092` is reachable.
+
+This Producer init-container refinement was added after the live EKS environment had been torn down. Its YAML and script integration were statically validated, but it was not part of the earlier live-cluster screenshots.
 
 ---
 
 # 7. Kafka
 
-Apache Kafka **4.3.1** runs as a Kubernetes StatefulSet in **KRaft mode**.
-
-ZooKeeper is not required.
-
-Kafka configuration:
+Apache Kafka **4.3.1** runs as a Kubernetes StatefulSet in **KRaft mode**, so ZooKeeper is not required.
 
 | Setting | Value |
 |---|---|
@@ -304,13 +354,19 @@ Kafka is defined in:
 - [`kafka/statefulset.yaml`](kafka/statefulset.yaml)
 - [`kafka/service.yaml`](kafka/service.yaml)
 
+Applications access Kafka through:
+
+```text
+kafka:9092
+```
+
 ---
 
 # 8. Kafka Persistent Storage
 
 Kafka uses an AWS EBS-backed PersistentVolumeClaim.
 
-Kafka stores its actual data under:
+Kafka stores its data under:
 
 ```text
 /var/lib/kafka/data/kafka
@@ -318,11 +374,11 @@ Kafka stores its actual data under:
 
 A dedicated `kafka` subdirectory is used instead of the filesystem root so that the EBS `lost+found` directory is not interpreted as Kafka topic data.
 
-The volume was inspected from inside the Kafka Pod and contained Kafka metadata and consumer-offset directories.
+The mounted volume was inspected from inside the Kafka Pod and contained Kafka metadata and consumer-offset directories.
 
 ![Kafka persistent EBS storage](evidence/12-kafka-persistent-storage.png)
 
-This demonstrates that Kafka is actively writing data to persistent EBS storage rather than temporary container storage.
+This demonstrates that Kafka was actively writing to persistent EBS storage rather than temporary container storage.
 
 ---
 
@@ -338,13 +394,13 @@ MongoDB **8.0.29** runs as a Kubernetes StatefulSet.
 | Collection | `security_events` |
 | Storage | 5 GiB EBS |
 
-MongoDB configuration:
+MongoDB configuration is stored in:
 
 - [`mongodb/statefulset.yaml`](mongodb/statefulset.yaml)
 - [`mongodb/service.yaml`](mongodb/service.yaml)
 - [`mongodb/storageclass.yaml`](mongodb/storageclass.yaml)
 
-MongoDB stores its database files under:
+MongoDB stores database files under:
 
 ```text
 /data/db
@@ -358,7 +414,7 @@ MongoDB was successfully deployed with a Bound PersistentVolumeClaim.
 
 ![MongoDB StatefulSet and PVC](evidence/03-mongodb-statefulset-pvc.png)
 
-Kafka and MongoDB were then verified together with both PVCs in the `Bound` state.
+Kafka and MongoDB were also verified together with both PVCs in the `Bound` state.
 
 ![Kafka and MongoDB persistent storage](evidence/04-kafka-mongodb-statefulsets-pvcs.png)
 
@@ -378,7 +434,7 @@ The custom StorageClass is:
 ca2-gp3
 ```
 
-It uses:
+Its configuration includes:
 
 ```text
 EBS type:          gp3
@@ -405,9 +461,9 @@ eksctl-ca2-ebs-csi-role
 
 The role uses the AWS-managed EBS CSI policy required for EBS operations.
 
-Because creation of IAM roles requires elevated IAM permissions, this association is treated as a one-time cluster prerequisite rather than an application-level Kubernetes resource.
+Creation of the IAM role requires elevated IAM permissions. Therefore, this association is documented as a cluster-level prerequisite rather than an application-level Kubernetes resource.
 
-The remaining cluster platform configuration is automated through:
+The remaining supported cluster setup is automated through:
 
 ```bash
 make -C CA2 cluster-setup
@@ -417,7 +473,7 @@ make -C CA2 cluster-setup
 
 # 12. Configuration Management
 
-Non-sensitive configuration is stored in Kubernetes ConfigMaps.
+Non-sensitive application settings are stored in Kubernetes ConfigMaps.
 
 Processor configuration includes:
 
@@ -437,7 +493,7 @@ KAFKA_TOPIC
 PRODUCE_INTERVAL
 ```
 
-This keeps environment-specific configuration separate from the container images.
+This keeps environment-specific configuration separate from container images.
 
 ---
 
@@ -445,24 +501,35 @@ This keeps environment-specific configuration separate from the container images
 
 Sensitive MongoDB credentials are **not committed to GitHub**.
 
+Declarative Secret templates are provided:
+
+- [`mongodb/secret.template.yaml`](mongodb/secret.template.yaml)
+- [`processor/secret.template.yaml`](processor/secret.template.yaml)
+
 The script:
 
 [`scripts/create-secrets.sh`](scripts/create-secrets.sh)
 
 prompts securely for the MongoDB password during deployment.
 
-It creates:
+The template files contain placeholders rather than real credentials.
+
+At deployment time, `envsubst` renders the runtime values into Kubernetes Secret resources, which are applied with `kubectl`.
+
+The script creates:
 
 ```text
 mongodb-secret
 processor-secret
 ```
 
-The MongoDB credentials are URL-encoded before the Processor connection URI is generated. This allows passwords containing URL-sensitive characters to work correctly.
+MongoDB credentials are URL-encoded before the Processor connection URI is generated. This supports passwords containing URL-sensitive characters.
 
 The repository was scanned for common AWS credential and password patterns before submission.
 
-No real application password or AWS credential is intentionally stored in the CA2 repository.
+The final scan returned no matching real credentials.
+
+The Secret-template refinement was added after the live cluster had been torn down. The templates and shell script were statically validated but were not rerun against the deleted EKS environment.
 
 ---
 
@@ -492,7 +559,7 @@ During testing, the Processor could start before Kafka was ready and encounter:
 NoBrokersAvailable
 ```
 
-The final Processor Deployment therefore contains a `wait-for-kafka` init container.
+The Processor Deployment was revised to contain a `wait-for-kafka` init container.
 
 The init container checks:
 
@@ -502,7 +569,7 @@ kafka:9092
 
 and does not allow the main Processor container to start until Kafka is reachable.
 
-This makes fresh deployments more reliable.
+This Processor startup fix was validated during the final live destroy/redeploy test.
 
 ---
 
@@ -514,23 +581,23 @@ The Processor exposes a REST API on port:
 8080
 ```
 
-The Kubernetes Service is defined in:
+The Service is defined in:
 
 [`processor/service.yaml`](processor/service.yaml)
 
-The REST API can be tested locally using:
+For local validation:
 
 ```bash
 kubectl port-forward -n ca2 service/processor 8080:8080
 ```
 
-Then:
+Then, from another terminal:
 
 ```bash
 curl http://localhost:8080/health
 ```
 
-Successful response:
+A successful response is:
 
 ```json
 {"kafka_topic":"auth-events","mongodb":"connected","status":"ok"}
@@ -540,7 +607,7 @@ Successful response:
 
 ![Processor REST health endpoint](evidence/05-processor-rest-health.png)
 
-This demonstrates that the Processor API is available and MongoDB connectivity is healthy.
+This demonstrates that the Processor REST API was available and MongoDB connectivity was healthy.
 
 ---
 
@@ -558,13 +625,13 @@ Processor
 MongoDB
 ```
 
-The Producer successfully published an authentication event.
+The Producer successfully published authentication events.
 
-The Processor consumed and classified the event.
+The Processor consumed and classified the events.
 
-MongoDB stored the processed result.
+MongoDB stored the processed results.
 
-## End-to-End Evidence
+## Evidence
 
 ![End-to-end pipeline validation](evidence/06-end-to-end-pipeline.png)
 
@@ -586,7 +653,7 @@ Once suspicious activity is detected, the Processor classifies events as:
 POSSIBLE_BRUTE_FORCE
 ```
 
-The Processor then stores those events in MongoDB.
+The Processor then stores the events in MongoDB.
 
 ![Brute-force event processing](evidence/13-brute-force-processing.png)
 
@@ -604,7 +671,7 @@ Configuration:
 
 ## Kafka
 
-Kafka allows TCP `9092` traffic from:
+Kafka allows TCP `9092` traffic from the required workloads:
 
 ```text
 Producer
@@ -621,7 +688,7 @@ Processor
 
 Unauthorized Pods are not permitted to directly access these protected services through the defined ingress policies.
 
-Amazon VPC CNI NetworkPolicy enforcement is enabled.
+Amazon VPC CNI NetworkPolicy enforcement was enabled.
 
 ## Validation
 
@@ -631,7 +698,7 @@ An unauthorized test Pod attempted to connect to MongoDB and received:
 Connection timed out
 ```
 
-The authorized Processor was then tested:
+The authorized Processor was then tested and returned:
 
 ```text
 Processor -> MongoDB: ALLOWED
@@ -641,7 +708,7 @@ Processor -> MongoDB: ALLOWED
 
 ![NetworkPolicy enforcement](evidence/07-network-policy-enforcement.png)
 
-This demonstrates both:
+This demonstrates:
 
 ```text
 Unauthorized path → blocked
@@ -662,7 +729,7 @@ The Processor uses:
 ServiceAccount: processor-sa
 ```
 
-The associated Role provides limited access to ConfigMaps.
+The namespace Role provides limited ConfigMap read access.
 
 The ServiceAccount does not receive unnecessary destructive privileges.
 
@@ -717,7 +784,7 @@ CPU and memory measurements were available for:
 - Processor
 - Producer
 
-These metrics are also consumed by the Horizontal Pod Autoscaler.
+These metrics are also available to the Horizontal Pod Autoscaler.
 
 ---
 
@@ -758,6 +825,12 @@ Observed improvement:
 
 The experiment demonstrates increased event throughput when additional Producer replicas are deployed.
 
+A repeatable version of this procedure is provided by:
+
+```bash
+make -C CA2 scaling-test
+```
+
 ---
 
 # 23. Horizontal Pod Autoscaler
@@ -776,19 +849,21 @@ Configuration:
 
 During testing, Producer CPU utilization was approximately 4%.
 
-After the Producer had previously been scaled to three replicas, HPA automatically reduced the Deployment back to one replica.
+After the Producer had previously been scaled to three replicas, the HPA automatically reduced the Deployment back to one replica.
 
 ## Evidence
 
 ![HPA automatic scaling](evidence/10-hpa-autoscaling.png)
 
-This demonstrates automatic CPU-based scale-down.
+This demonstrates automatic CPU-based **scale-down**.
+
+A sustained CPU-load experiment forcing automatic HPA scale-up was not performed, and this limitation is documented rather than overstated.
 
 ---
 
 # 24. Complete Kubernetes Stack
 
-The final Kubernetes environment contained:
+The final live Kubernetes environment contained:
 
 ```text
 Kafka StatefulSet
@@ -835,11 +910,11 @@ make -C CA2 cluster-setup
 make -C CA2 deploy
 ```
 
-The deployment process:
+The deployment workflow:
 
 1. Creates the `ca2` namespace.
 2. Prompts securely for the MongoDB password.
-3. Creates Kubernetes Secrets.
+3. Renders and applies Kubernetes Secrets.
 4. Creates the StorageClass.
 5. Deploys MongoDB.
 6. Deploys Kafka.
@@ -865,7 +940,7 @@ make -C CA2 destroy
 
 # 26. Fresh Environment Workflow
 
-A new environment follows this order:
+A fresh environment follows this order:
 
 ```text
 1. Create EKS cluster
@@ -879,419 +954,33 @@ A new environment follows this order:
 5. Validate workloads
 ```
 
-Commands:
+Create the cluster:
 
 ```bash
 make -C CA2 cluster-up
 ```
 
-Complete the documented one-time EBS CSI Pod Identity prerequisite when required.
+Complete the documented EBS CSI Pod Identity prerequisite when required.
 
-Then:
+Then configure the cluster platform:
 
 ```bash
 make -C CA2 cluster-setup
 ```
 
-Then:
+Deploy the application:
 
 ```bash
 make -C CA2 deploy
 ```
 
-The separation between cluster infrastructure, cluster-level IAM prerequisites, platform add-ons, and application resources is intentional.
+This separation between cluster infrastructure, privileged IAM prerequisites, cluster add-ons, and application resources is intentional.
 
 ---
 
-# 27. Destroy and Redeploy Validation
+# 27. Smoke Test
 
-Reproducibility was tested by deleting the complete CA2 application:
-
-```bash
-make -C CA2 destroy
-```
-
-The namespace was verified as absent.
-
-The application was then recreated using:
-
-```bash
-make -C CA2 deploy
-```
-
-After deployment:
-
-```text
-Kafka       1/1 Running
-MongoDB     1/1 Running
-Processor   1/1 Running
-Producer    1/1 Running
-
-Kafka PVC   Bound
-MongoDB PVC Bound
-```
-
-No manual Processor restart was required during the final validation.
-
-## Automated Redeployment Evidence
-
-![Automated redeployment](evidence/14-automated-redeployment.png)
-
----
-
-# 28. Post-Redeployment Pipeline Validation
-
-After the automated redeployment, the Processor immediately resumed consuming authentication events and storing them in MongoDB.
-
-Processor logs showed repeated:
-
-```text
-Received event
-Stored event_id=...
-```
-
-## Evidence
-
-![Post-redeployment pipeline validation](evidence/15-post-redeploy-pipeline-validation.png)
-
-This demonstrates that the deployed application is not only recreated successfully but also returns to functional end-to-end operation.
-
----
-
-# 29. IAM / Platform Setup Evidence
-
-AWS IAM permissions were configured to support the EKS deployment and required AWS services.
-
-![CA2 EKS IAM permissions](evidence/01-ca2-eks-iam-permissions.png)
-
-IAM role creation for the EBS CSI Pod Identity required elevated AWS permissions and is therefore documented as a cluster-level prerequisite.
-
-No AWS credentials are committed to this repository.
-
----
-
-# 30. Validation Commands
-
-Useful validation commands include:
-
-```bash
-kubectl get nodes -o wide
-```
-
-```bash
-kubectl get all -n ca2
-```
-
-```bash
-kubectl get pods,pvc -n ca2
-```
-
-```bash
-kubectl get networkpolicy -n ca2
-```
-
-```bash
-kubectl get hpa -n ca2
-```
-
-```bash
-kubectl top pods -n ca2
-```
-
-```bash
-kubectl logs -n ca2 deployment/processor --tail=20
-```
-
-Check RBAC:
-
-```bash
-kubectl auth can-i get configmaps \
-  --as=system:serviceaccount:ca2:processor-sa \
-  -n ca2
-```
-
-Check Kafka topic:
-
-```bash
-kubectl exec -n ca2 kafka-0 -- \
-  /opt/kafka/bin/kafka-topics.sh \
-  --bootstrap-server localhost:9092 \
-  --list
-```
-
----
-
-# 31. Security Controls
-
-CA2 implements multiple security layers:
-
-| Control | Implementation |
-|---|---|
-| Secret management | Kubernetes Secrets created at deployment |
-| Git credential hygiene | Real passwords/keys excluded |
-| Network isolation | Kubernetes NetworkPolicy |
-| NetworkPolicy enforcement | Amazon VPC CNI |
-| Authorization | Kubernetes RBAC |
-| Workload identity | Dedicated Processor ServiceAccount |
-| Persistent volume encryption | Encrypted gp3 EBS |
-| AWS workload permissions | EKS Pod Identity |
-| Private images | Amazon ECR |
-| MongoDB authentication | Enabled |
-
----
-
-# 32. Known Limitations
-
-The current implementation has several deliberate limitations appropriate for the course environment:
-
-1. Kafka uses one broker rather than a multi-broker production cluster.
-2. MongoDB uses one replica rather than a MongoDB replica set.
-3. The Processor REST API uses Flask's development server.
-4. Scaling measurements use short 30-second experiments rather than long-duration benchmarks.
-5. HPA automatic scale-down was demonstrated; a sustained CPU load test forcing automatic scale-up was not performed.
-6. The Producer can restart during initial startup if Kafka is not yet available. The Processor explicitly handles Kafka startup using an init container.
-7. Standard Kubernetes Secrets are used for runtime credential injection rather than an external production secrets-management platform.
-8. EBS CSI Pod Identity role creation is a documented cluster-level IAM prerequisite because the restricted deployment identity does not have unrestricted IAM role creation privileges.
-
-These limitations are also documented in the Integrity Packet.
-
----
-
-# 33. Cleanup
-
-Delete only the application:
-
-```bash
-make -C CA2 destroy
-```
-
-Delete the EKS cluster and worker infrastructure:
-
-```bash
-make -C CA2 cluster-down
-```
-
-Deleting only the `ca2` namespace does **not** delete the EKS cluster.
-
-The cluster should be removed when it is no longer needed to avoid unnecessary AWS infrastructure charges.
-
----
-
-# 34. Evidence Index
-
-All evidence is stored under [`evidence/`](evidence/).
-
-| # | Evidence | Demonstrates |
-|---:|---|---|
-| 01 | [IAM permissions](evidence/01-ca2-eks-iam-permissions.png) | AWS/EKS permission configuration |
-| 02 | [Three EKS nodes](evidence/02-eks-three-nodes.png) | Platform execution |
-| 03 | [MongoDB StatefulSet + PVC](evidence/03-mongodb-statefulset-pvc.png) | Stateful persistent storage |
-| 04 | [Kafka + MongoDB PVCs](evidence/04-kafka-mongodb-statefulsets-pvcs.png) | Persistent stateful workloads |
-| 05 | [Processor REST health](evidence/05-processor-rest-health.png) | REST API functionality |
-| 06 | [End-to-end pipeline](evidence/06-end-to-end-pipeline.png) | Pipeline correctness |
-| 07 | [NetworkPolicy enforcement](evidence/07-network-policy-enforcement.png) | Network isolation |
-| 08 | [RBAC least privilege](evidence/08-rbac-least-privilege.png) | Kubernetes authorization |
-| 09 | [Scaling throughput](evidence/09-producer-scaling-throughput.png) | Horizontal scaling measurement |
-| 10 | [HPA autoscaling](evidence/10-hpa-autoscaling.png) | Automatic scaling |
-| 11 | [Full Kubernetes stack](evidence/11-full-kubernetes-stack.png) | Complete orchestration |
-| 12 | [Kafka persistent storage](evidence/12-kafka-persistent-storage.png) | Kafka actively using EBS |
-| 13 | [Brute-force processing](evidence/13-brute-force-processing.png) | Security-event classification |
-| 14 | [Automated redeployment](evidence/14-automated-redeployment.png) | Reproducibility |
-| 15 | [Post-redeploy validation](evidence/15-post-redeploy-pipeline-validation.png) | Functional redeployment |
-
----
-
-# 35. CA2 Rubric Coverage
-
-## Declarative Completeness — 20%
-
-Implemented through:
-
-- EKS `cluster.yaml`
-- Kubernetes namespace
-- Deployments
-- StatefulSets
-- Services
-- StorageClass
-- PVC templates
-- ConfigMaps
-- NetworkPolicies
-- RBAC
-- HPA
-- Makefile orchestration
-- cluster platform setup script
-- secure Secret creation script
-- successful destroy/redeploy test
-
-## Security and Isolation — 15%
-
-Implemented through:
-
-- Kubernetes Secrets
-- encrypted EBS storage
-- NetworkPolicies
-- VPC CNI NetworkPolicy enforcement
-- least-privilege RBAC
-- dedicated ServiceAccount
-- EKS Pod Identity
-- private ECR repositories
-- repository credential scan
-
-## Scaling and Observability — 20%
-
-Demonstrated through:
-
-- Metrics Server
-- `kubectl top`
-- Producer CPU metrics
-- HPA
-- manual scaling from 1 → 3 replicas
-- measured throughput:
-  - 1 replica: 1.03 events/sec
-  - 3 replicas: 3.27 events/sec
-- approximately 3.16x observed throughput increase
-- automatic HPA scale-down
-
-## Documentation and Usability — 20%
-
-Provided through:
-
-- this README
-- architecture diagrams
-- clickable source links
-- inline evidence
-- deployment instructions
-- validation commands
-- cleanup instructions
-- troubleshooting-informed configuration
-- Integrity Packet
-
-## Platform Execution — 10%
-
-Demonstrated through:
-
-- Amazon EKS
-- three worker nodes
-- Amazon ECR
-- AWS EBS
-- EBS CSI
-- EKS Pod Identity
-- VPC CNI
-- running Kubernetes application
-- successful REST request
-- successful end-to-end event processing
-
-## Integrity Packet — 15%
-
-See:
-
-[**CA2 Integrity Packet**](IntegrityPacket.md)
-
-The packet documents:
-
-- engineering/design claims
-- evidence
-- assumptions
-- limitations
-- validation/test results
-- problems and revisions
-- AI assistance and verification
-
----
-
-# 36. Final Result
-
-The final CA2 system successfully migrates the CA0/CA1 authentication-event pipeline to Kubernetes on Amazon EKS.
-
-The final implementation demonstrates:
-
-```text
-Three-node Amazon EKS cluster        ✓
-Producer Deployment                  ✓
-Kafka StatefulSet                    ✓
-Kafka KRaft mode                     ✓
-MongoDB StatefulSet                  ✓
-Processor Deployment                 ✓
-REST API                             ✓
-Amazon ECR images                    ✓
-AWS EBS persistent storage           ✓
-ConfigMaps                           ✓
-Kubernetes Secrets                   ✓
-NetworkPolicy enforcement            ✓
-Least-privilege RBAC                 ✓
-Metrics Server                       ✓
-Horizontal scaling                   ✓
-Measured throughput improvement      ✓
-Horizontal Pod Autoscaler            ✓
-Brute-force event classification     ✓
-Automated deployment/destruction     ✓
-Successful destroy/redeploy test     ✓
-Post-redeploy pipeline validation    ✓
-Integrity Packet                     ✓
-```
-
-The system preserves the required logical cloud pipeline:
-
-```text
-Producers → Pub/Sub Hub → Processor → Database/Analytics
-```
-
-while adding Kubernetes orchestration, persistence, security isolation, observability, scaling, and reproducible deployment.
----
-
-# 37. Prerequisites
-
-Before deploying CA2, the following tools and access are required:
-
-- AWS CLI configured with the `ca2` profile
-- `eksctl`
-- `kubectl`
-- Docker Desktop / Docker Engine
-- Docker Buildx
-- GNU Make
-- Python 3
-- `envsubst` from GNU gettext
-- Access to the AWS account used for Amazon EKS and Amazon ECR
-- Permission to pull the private Producer and Processor images from Amazon ECR
-- A valid Kubernetes context after the EKS cluster is created
-
-Important versions used during CA2:
-
-| Component | Version |
-|---|---|
-| Amazon EKS / Kubernetes | 1.34 |
-| Apache Kafka | 4.3.1 |
-| MongoDB | 8.0.29 |
-| Python container base | 3.12 |
-
-Tool versions can be checked with:
-
-```bash
-aws --version
-eksctl version
-kubectl version --client
-docker --version
-```
-
-Verify the Kubernetes context after cluster creation:
-
-```bash
-kubectl config current-context
-kubectl get nodes
-```
-
-The EBS CSI Pod Identity IAM prerequisite documented earlier in this README must also be available before EBS volumes can be dynamically provisioned.
-
-
----
-
-# 38. Reproducible Validation and Test Commands
-
-CA2 provides Makefile targets for repeatable smoke testing, scaling measurement, and evidence collection.
-
-## Smoke Test
-
-Run:
+CA2 provides a repeatable smoke-test target:
 
 ```bash
 make -C CA2 smoke-test
@@ -1300,31 +989,35 @@ make -C CA2 smoke-test
 The smoke-test workflow checks:
 
 1. Application Pods and PVCs.
-2. The Kafka `auth-events` topic.
+2. Kafka topics.
 3. Producer output.
 4. Processor output.
 5. MongoDB record count.
-6. Instructions for testing the Processor REST endpoint.
+6. REST endpoint test instructions.
 
-For the REST test, run in Terminal 1:
+For the REST portion, run in Terminal 1:
 
 ```bash
 kubectl port-forward -n ca2 service/processor 8080:8080
 ```
 
-Then run in Terminal 2:
+Then in Terminal 2:
 
 ```bash
 curl http://localhost:8080/health
 ```
 
-Expected healthy response:
+Expected response:
 
 ```json
 {"kafka_topic":"auth-events","mongodb":"connected","status":"ok"}
 ```
 
-## Scaling Test
+The original live smoke-test evidence was collected manually before this helper script was added.
+
+---
+
+# 28. Reproducible Scaling Test
 
 Run:
 
@@ -1332,28 +1025,36 @@ Run:
 make -C CA2 scaling-test
 ```
 
-The repeatable scaling test:
+The scaling test:
 
-1. Scales the Producer to 1 replica.
-2. Measures processed events during a 30-second window.
-3. Scales the Producer to 3 replicas.
-4. Measures another 30-second window.
-5. Reports the number of events and calculated events per second.
+1. Scales the Producer to one replica.
+2. Waits for the Deployment.
+3. Measures MongoDB event growth over 30 seconds.
+4. Scales the Producer to three replicas.
+5. Waits for the Deployment.
+6. Measures another 30-second interval.
+7. Reports events and calculated events per second.
 
-The validated CA2 experiment produced:
+The validated live experiment produced:
 
 | Producer Replicas | Events / 30 sec | Approx. Events/sec |
 |---:|---:|---:|
 | 1 | 31 | 1.03 |
 | 3 | 98 | 3.27 |
 
-Observed throughput improvement: approximately **3.16x**.
+Observed throughput improvement:
 
-Scaling evidence:
+**approximately 3.16x**
+
+Evidence:
 
 [Scaling throughput evidence](evidence/09-producer-scaling-throughput.png)
 
-## Evidence Collection
+The helper script reproduces the measurement procedure used during the live experiment, but the script itself was added after cluster teardown and therefore received static rather than live validation.
+
+---
+
+# 29. Evidence Collection
 
 Run:
 
@@ -1361,7 +1062,7 @@ Run:
 make -C CA2 evidence
 ```
 
-The evidence target collects:
+The evidence helper collects:
 
 - `kubectl get all -A`
 - CA2 PersistentVolumeClaims
@@ -1370,9 +1071,13 @@ The evidence target collects:
 - HPA status
 - Pod CPU and memory metrics
 
-This provides a repeatable final-state evidence collection procedure.
+This provides a repeatable evidence-collection procedure for future deployments.
 
-## Logs and Results
+The helper was added after the original live evidence had already been captured.
+
+---
+
+# 30. Logs and Results
 
 Producer logs:
 
@@ -1420,14 +1125,100 @@ Captured screenshots and validated results are stored in:
 
 [`evidence/`](evidence/)
 
-Engineering claims and their supporting evidence are mapped in:
+Engineering claims and supporting evidence are mapped in:
 
 [**IntegrityPacket.md**](IntegrityPacket.md)
 
+---
+
+# 31. Destroy and Redeploy Validation
+
+Reproducibility was tested by deleting the complete CA2 application:
+
+```bash
+make -C CA2 destroy
+```
+
+The `ca2` namespace was verified as absent.
+
+The application was then recreated using:
+
+```bash
+make -C CA2 deploy
+```
+
+After deployment:
+
+```text
+Kafka       1/1 Running
+MongoDB     1/1 Running
+Processor   1/1 Running
+Producer    1/1 Running
+
+Kafka PVC   Bound
+MongoDB PVC Bound
+```
+
+No manual Processor restart was required during the final validation.
+
+## Evidence
+
+![Automated redeployment](evidence/14-automated-redeployment.png)
 
 ---
 
-# 39. Deviations from CA0/CA1
+# 32. Post-Redeployment Pipeline Validation
+
+After automated redeployment, the Processor resumed consuming authentication events and storing them in MongoDB.
+
+Processor logs showed repeated:
+
+```text
+Received event
+Stored event_id=...
+```
+
+## Evidence
+
+![Post-redeployment pipeline validation](evidence/15-post-redeploy-pipeline-validation.png)
+
+This demonstrates that the application was not only recreated successfully but also returned to functional end-to-end operation.
+
+---
+
+# 33. IAM / Platform Setup Evidence
+
+AWS IAM permissions were configured to support the EKS deployment and required AWS services.
+
+![CA2 EKS IAM permissions](evidence/01-ca2-eks-iam-permissions.png)
+
+IAM role creation for EBS CSI Pod Identity required elevated AWS permissions and is documented as a cluster-level prerequisite.
+
+No AWS credentials are committed to this repository.
+
+---
+
+# 34. Security Controls
+
+CA2 implements multiple security layers:
+
+| Control | Implementation |
+|---|---|
+| Secret management | Declarative Secret templates + runtime values |
+| Git credential hygiene | Real passwords/keys excluded |
+| Network isolation | Kubernetes NetworkPolicy |
+| NetworkPolicy enforcement | Amazon VPC CNI |
+| Authorization | Kubernetes RBAC |
+| Workload identity | Dedicated Processor ServiceAccount |
+| Persistent volume encryption | Encrypted gp3 EBS |
+| AWS workload permissions | EKS Pod Identity |
+| Private images | Amazon ECR |
+| MongoDB authentication | Enabled |
+| Published application exposure | ClusterIP only |
+
+---
+
+# 35. Deviations from CA0/CA1
 
 CA2 preserves the original logical application pipeline:
 
@@ -1435,13 +1226,13 @@ CA2 preserves the original logical application pipeline:
 Producer → Kafka → Processor → MongoDB
 ```
 
-The application behavior remains consistent with CA0/CA1, but the deployment model was changed to satisfy Kubernetes orchestration requirements.
+The deployment model was changed to satisfy Kubernetes orchestration requirements.
 
 ## Producer
 
-The CA0 Producer operated as a one-shot workload. For CA2, the Producer was adapted to run continuously as a Kubernetes Deployment.
+The CA0 Producer operated as a one-shot workload. For CA2, it was adapted to run continuously as a Kubernetes Deployment.
 
-This change allows:
+This enables:
 
 - multiple Producer replicas;
 - horizontal scaling;
@@ -1452,39 +1243,29 @@ This change allows:
 
 Kafka was migrated to a Kubernetes StatefulSet using KRaft mode.
 
-Persistent AWS EBS storage was added so Kafka data survives container recreation.
-
-Kafka uses an internal Kubernetes Service for stable service discovery.
+Persistent EBS storage was added so Kafka data survives container recreation.
 
 ## MongoDB
 
-MongoDB was migrated to a Kubernetes StatefulSet.
-
-Database files are stored on an EBS-backed PersistentVolumeClaim instead of relying on temporary container storage.
+MongoDB was migrated to a StatefulSet with an EBS-backed PersistentVolumeClaim.
 
 ## Processor
 
-The Processor was migrated to a Kubernetes Deployment and exposed internally through a ClusterIP Service on port 8080.
+The Processor was migrated to a Kubernetes Deployment and exposed internally through a ClusterIP Service.
 
-A `wait-for-kafka` init container was added to prevent the Processor from starting before Kafka is reachable.
+A `wait-for-kafka` init container was added to handle startup ordering.
 
 ## Configuration
 
-Non-sensitive application settings were moved to Kubernetes ConfigMaps.
-
-This separates application configuration from container images.
+Non-sensitive settings were moved to ConfigMaps.
 
 ## Secrets
 
-Credentials are represented using declarative Kubernetes Secret templates.
-
-Actual secret values are supplied interactively during deployment and rendered into the Secret resources at runtime so plaintext credentials are not committed to Git.
+Credentials are represented by declarative Kubernetes Secret templates. Actual values are supplied interactively during deployment so plaintext passwords are not committed to Git.
 
 ## Container Registry
 
-The custom Producer and Processor images are stored in private Amazon ECR repositories.
-
-Images were built for `linux/amd64` to match the EKS worker-node architecture.
+Custom Producer and Processor images are stored in private Amazon ECR repositories.
 
 ## Networking
 
@@ -1496,17 +1277,17 @@ mongodb
 processor
 ```
 
-NetworkPolicies were added to restrict access to Kafka and MongoDB.
+NetworkPolicies restrict access to Kafka and MongoDB.
 
 ## Access Control
 
-Kubernetes RBAC and a dedicated `processor-sa` ServiceAccount were introduced to demonstrate least-privilege workload authorization.
+Kubernetes RBAC and a dedicated `processor-sa` ServiceAccount provide least-privilege authorization.
 
 ## Scaling and Observability
 
 CA2 adds:
 
-- Kubernetes Metrics Server;
+- Metrics Server;
 - CPU and memory metrics;
 - resource requests and limits;
 - Horizontal Pod Autoscaler;
@@ -1530,4 +1311,224 @@ application destruction
 cluster destruction
 ```
 
-These changes preserve the CA0/CA1 logical pipeline while adapting the implementation to Kubernetes and the CA2 PaaS orchestration requirements.
+These changes preserve the CA0/CA1 pipeline while adapting the implementation to Kubernetes.
+
+---
+
+# 36. Known Limitations
+
+1. Kafka uses a single broker rather than a multi-broker production cluster.
+
+2. MongoDB uses one StatefulSet replica rather than a MongoDB replica set.
+
+3. The Processor REST API uses Flask's development server. A production deployment would normally use a production WSGI server.
+
+4. Scaling measurements used short 30-second windows and are not intended as comprehensive performance benchmarks.
+
+5. The HPA demonstration verified automatic scale-down under low CPU. A sustained CPU-load experiment forcing automatic HPA scale-up was not performed.
+
+6. Both Producer and Processor Deployments now include `wait-for-kafka` init containers. The Processor startup fix was validated during the live destroy/redeploy test. The later Producer init-container refinement was statically validated after cluster teardown and was not rerun against the deleted EKS environment.
+
+7. Kubernetes Secrets protect credentials from being committed to Git, but standard Kubernetes Secrets are not equivalent to a dedicated external secrets-management platform.
+
+8. EBS CSI Pod Identity role creation remains a documented cluster-level IAM prerequisite because the restricted deployment identity did not have unrestricted IAM role-creation permissions.
+
+9. The declarative Secret-template refinement and the new helper scripts were added after cluster teardown. They were syntax/YAML validated but were not rerun against the deleted live EKS environment.
+
+---
+
+# 37. Cleanup
+
+Delete the application:
+
+```bash
+make -C CA2 destroy
+```
+
+Delete the EKS cluster and worker infrastructure:
+
+```bash
+make -C CA2 cluster-down
+```
+
+Deleting only the `ca2` namespace does **not** delete the EKS cluster.
+
+The final live CA2 environment was torn down successfully after evidence collection, and `eksctl get cluster` subsequently returned no CA2 cluster.
+
+---
+
+# 38. Evidence Index
+
+All evidence is stored under [`evidence/`](evidence/).
+
+| # | Evidence | Demonstrates |
+|---:|---|---|
+| 01 | [IAM permissions](evidence/01-ca2-eks-iam-permissions.png) | AWS/EKS permission configuration |
+| 02 | [Three EKS nodes](evidence/02-eks-three-nodes.png) | Three-node platform execution |
+| 03 | [MongoDB StatefulSet + PVC](evidence/03-mongodb-statefulset-pvc.png) | MongoDB persistent storage |
+| 04 | [Kafka + MongoDB PVCs](evidence/04-kafka-mongodb-statefulsets-pvcs.png) | Persistent stateful workloads |
+| 05 | [Processor REST health](evidence/05-processor-rest-health.png) | REST API functionality |
+| 06 | [End-to-end pipeline](evidence/06-end-to-end-pipeline.png) | Pipeline correctness |
+| 07 | [NetworkPolicy enforcement](evidence/07-network-policy-enforcement.png) | Network isolation |
+| 08 | [RBAC least privilege](evidence/08-rbac-least-privilege.png) | Kubernetes authorization |
+| 09 | [Scaling throughput](evidence/09-producer-scaling-throughput.png) | Horizontal scaling measurement |
+| 10 | [HPA autoscaling](evidence/10-hpa-autoscaling.png) | Automatic HPA scale-down |
+| 11 | [Full Kubernetes stack](evidence/11-full-kubernetes-stack.png) | Complete application stack |
+| 12 | [Kafka persistent storage](evidence/12-kafka-persistent-storage.png) | Kafka actively using EBS |
+| 13 | [Brute-force processing](evidence/13-brute-force-processing.png) | Security-event classification |
+| 14 | [Automated redeployment](evidence/14-automated-redeployment.png) | Reproducibility |
+| 15 | [Post-redeploy validation](evidence/15-post-redeploy-pipeline-validation.png) | Functional redeployment |
+
+---
+
+# 39. CA2 Rubric Coverage
+
+## Declarative Completeness — 20%
+
+Implemented through:
+
+- EKS cluster configuration
+- Namespace
+- Producer Deployment
+- Processor Deployment
+- Kafka StatefulSet
+- MongoDB StatefulSet
+- Services
+- StorageClass
+- PVC templates
+- ConfigMaps
+- declarative Secret templates
+- NetworkPolicies
+- RBAC
+- HPA
+- Makefile orchestration
+- cluster platform setup script
+- runtime Secret rendering
+- successful destroy/redeploy validation
+
+## Security and Isolation — 15%
+
+Implemented through:
+
+- Kubernetes Secrets
+- no plaintext application password committed
+- encrypted EBS storage
+- NetworkPolicies
+- VPC CNI NetworkPolicy enforcement
+- least-privilege RBAC
+- dedicated ServiceAccount
+- EKS Pod Identity
+- private ECR repositories
+- repository credential scan
+- ClusterIP application Services
+
+## Scaling and Observability — 20%
+
+Demonstrated through:
+
+- Metrics Server
+- `kubectl top`
+- Producer CPU metrics
+- HPA
+- manual scaling from 1 to 3 replicas
+- measured throughput:
+  - 1 replica: 1.03 events/sec
+  - 3 replicas: 3.27 events/sec
+- approximately 3.16x observed throughput improvement
+- automatic HPA scale-down
+- repeatable scaling-test procedure
+
+## Documentation and Usability — 20%
+
+Provided through:
+
+- this README
+- Mermaid architecture diagrams
+- prerequisites
+- project structure
+- deploy/destroy instructions
+- smoke-test instructions
+- scaling-test instructions
+- logs/results instructions
+- evidence collection target
+- inline screenshots
+- clickable evidence index
+- CA0/CA1 deviations
+- cleanup instructions
+- Integrity Packet
+
+## Platform Execution — 10%
+
+Demonstrated through:
+
+- Amazon EKS
+- three worker nodes
+- Amazon ECR
+- AWS EBS
+- EBS CSI
+- EKS Pod Identity
+- VPC CNI
+- working Kubernetes application
+- successful REST request
+- successful end-to-end event processing
+- clean cluster teardown
+
+## Integrity Packet — 15%
+
+See:
+
+[**CA2 Integrity Packet**](IntegrityPacket.md)
+
+The packet documents:
+
+- engineering/design claims
+- evidence
+- assumptions
+- known limitations
+- validation and test results
+- implementation revisions
+- AI assistance
+- official documentation verification
+
+---
+
+# 40. Final Result
+
+The final CA2 system successfully migrated the CA0/CA1 authentication-event pipeline to Kubernetes on Amazon EKS.
+
+The live implementation demonstrated:
+
+```text
+Three-node Amazon EKS cluster        ✓
+Producer Deployment                  ✓
+Kafka StatefulSet                    ✓
+Kafka KRaft mode                     ✓
+MongoDB StatefulSet                  ✓
+Processor Deployment                 ✓
+REST API                             ✓
+Amazon ECR images                    ✓
+AWS EBS persistent storage           ✓
+ConfigMaps                           ✓
+Kubernetes Secrets                   ✓
+NetworkPolicy enforcement            ✓
+Least-privilege RBAC                 ✓
+Metrics Server                       ✓
+Horizontal scaling                   ✓
+Measured throughput improvement      ✓
+Horizontal Pod Autoscaler            ✓
+Brute-force event classification     ✓
+Automated deployment/destruction     ✓
+Successful destroy/redeploy test     ✓
+Post-redeploy pipeline validation    ✓
+Integrity Packet                     ✓
+```
+
+The final repository additionally includes statically validated refinements for declarative Secret templates, Producer startup ordering, smoke testing, scaling testing, and evidence collection.
+
+The required logical cloud pipeline remains:
+
+```text
+Producers → Pub/Sub Hub → Processor → Database/Analytics
+```
+
+while CA2 adds Kubernetes orchestration, persistent storage, security isolation, observability, scaling, and reproducible deployment.
