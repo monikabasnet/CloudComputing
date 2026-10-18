@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-This Integrity Packet documents the engineering claims, supporting evidence, validation results, assumptions, limitations, and use of AI assistance for CA2 – PaaS Orchestration.
+This Integrity Packet documents the engineering claims, supporting evidence, validation results, assumptions, known limitations, implementation revisions, and use of AI assistance for CA2 – PaaS Orchestration.
 
 The system implements the authentication-event pipeline:
 
@@ -12,17 +12,22 @@ Producer → Kafka → Processor → MongoDB
                     REST API
 ```
 
-The application is deployed on Amazon EKS using Kubernetes resources.
+The application was deployed on Amazon EKS using Kubernetes resources.
+
+This packet distinguishes between:
+
+- features validated against the live EKS environment; and
+- later repository refinements that were statically validated after the live cluster was torn down.
 
 ---
 
 # 2. Engineering and Design Claims
 
-## Claim 1 – The application runs on Amazon EKS with three worker nodes
+## Claim 1 — The application ran on Amazon EKS with three worker nodes
 
 The CA2 Kubernetes platform was deployed using Amazon EKS in `us-east-2`.
 
-The cluster contains three managed worker nodes.
+The cluster contained three managed worker nodes.
 
 ### Evidence
 
@@ -36,9 +41,13 @@ kubectl get nodes -o wide
 
 All three worker nodes were observed in the `Ready` state.
 
+### Status
+
+**Runtime validated.**
+
 ---
 
-## Claim 2 – The application preserves the CA0/CA1 logical pipeline
+## Claim 2 — The application preserves the CA0/CA1 logical pipeline
 
 The logical pipeline remains:
 
@@ -67,9 +76,13 @@ Stored event_id=...
 
 MongoDB queries confirmed processed events were persisted in the `security_events` collection.
 
+### Status
+
+**Runtime validated.**
+
 ---
 
-## Claim 3 – MongoDB uses persistent Kubernetes storage
+## Claim 3 — MongoDB uses persistent Kubernetes storage
 
 MongoDB is deployed using a StatefulSet and stores its database files on a dynamically provisioned AWS EBS volume.
 
@@ -98,11 +111,15 @@ with the AWS EBS CSI provisioner:
 ebs.csi.aws.com
 ```
 
+### Status
+
+**Runtime validated.**
+
 ---
 
-## Claim 4 – Kafka uses persistent EBS storage
+## Claim 4 — Kafka uses persistent EBS storage
 
-Kafka is deployed as a StatefulSet and stores Kafka data on its EBS-backed PVC.
+Kafka is deployed as a StatefulSet and stores Kafka data on an EBS-backed PVC.
 
 Kafka data is stored under:
 
@@ -119,17 +136,28 @@ Kafka data is stored under:
 
 The Kafka PVC was observed in the `Bound` state.
 
-The mounted volume was inspected inside the Kafka Pod and contained Kafka files including cluster metadata and consumer-offset directories.
+The mounted EBS volume was inspected from inside the Kafka Pod and contained Kafka metadata and consumer-offset directories.
 
-This confirmed that the PVC was not merely attached; Kafka was actively using it.
+This demonstrated that the PVC was not merely attached; Kafka was actively using it.
+
+### Status
+
+**Runtime validated.**
 
 ---
 
-## Claim 5 – Sensitive application credentials are not committed to the repository
+## Claim 5 — Sensitive application credentials are not committed to the repository
 
-MongoDB credentials are created during deployment rather than stored as plaintext in Git.
+MongoDB credentials are supplied at deployment time rather than committed as plaintext.
 
-### Design
+The final repository includes declarative Secret templates:
+
+```text
+mongodb/secret.template.yaml
+processor/secret.template.yaml
+```
+
+The templates contain placeholders rather than real credentials.
 
 The script:
 
@@ -137,26 +165,29 @@ The script:
 scripts/create-secrets.sh
 ```
 
-prompts for the MongoDB password and creates:
+prompts securely for the MongoDB password.
 
-```text
-mongodb-secret
-processor-secret
-```
-
-The password is not written into the repository.
-
-The MongoDB username and password are URL-encoded before constructing the Processor MongoDB URI so special characters can be used safely.
+The username and password are URL-encoded before the Processor MongoDB URI is constructed.
 
 ### Validation
 
-The CA2 directory was searched for common AWS credential and placeholder-secret patterns before submission.
+The CA2 directory was scanned for common AWS credential and placeholder-secret patterns.
 
-The final scan did not return matching credentials.
+The final scan returned no matching real credentials.
+
+The Secret template YAML files were parsed successfully during static validation.
+
+The shell script passed `bash -n`.
+
+### Status
+
+The original runtime Secret workflow was **runtime validated**.
+
+The final declarative-template refinement was added after cluster teardown and was **statically validated**, not rerun against the deleted EKS environment.
 
 ---
 
-## Claim 6 – Network isolation is enforced
+## Claim 6 — Network isolation is enforced
 
 Kubernetes NetworkPolicies restrict access to Kafka and MongoDB.
 
@@ -199,9 +230,13 @@ Processor -> MongoDB: ALLOWED
 
 This demonstrated both denied and permitted network paths.
 
+### Status
+
+**Runtime validated.**
+
 ---
 
-## Claim 7 – Kubernetes RBAC follows least privilege
+## Claim 7 — Kubernetes RBAC follows least privilege
 
 The Processor uses a dedicated ServiceAccount:
 
@@ -247,9 +282,13 @@ Result:
 no
 ```
 
+### Status
+
+**Runtime validated.**
+
 ---
 
-## Claim 8 – The Processor REST endpoint is functional
+## Claim 8 — The Processor REST endpoint is functional
 
 The Processor exposes a REST API on port `8080`.
 
@@ -259,7 +298,7 @@ The Processor exposes a REST API on port `8080`.
 
 ### Validation
 
-The Processor Service was temporarily forwarded locally:
+The Processor Service was forwarded locally:
 
 ```bash
 kubectl port-forward -n ca2 service/processor 8080:8080
@@ -279,9 +318,13 @@ The response was:
 
 This demonstrated that the REST service was running and MongoDB connectivity was healthy.
 
+### Status
+
+**Runtime validated.**
+
 ---
 
-## Claim 9 – Horizontal scaling increases Producer throughput
+## Claim 9 — Horizontal scaling increases Producer throughput
 
 The Producer was tested with one replica and three replicas using equal 30-second measurement windows.
 
@@ -306,9 +349,15 @@ approximately 3.16x
 
 Increasing the Producer replica count from one to three increased the rate at which authentication events entered and passed through the pipeline during this test.
 
+### Status
+
+**Runtime validated.**
+
+A repeatable `scaling-test.sh` helper was later added to encode the same measurement procedure. That helper was statically validated after cluster teardown.
+
 ---
 
-## Claim 10 – Kubernetes resource metrics are available
+## Claim 10 — Kubernetes resource metrics are available
 
 Metrics Server provides CPU and memory measurements for application Pods.
 
@@ -325,11 +374,15 @@ returned CPU and memory measurements for:
 - Processor
 - Producer
 
-These metrics are also available to the Horizontal Pod Autoscaler.
+These metrics were also available to the Horizontal Pod Autoscaler.
+
+### Status
+
+**Runtime validated.**
 
 ---
 
-## Claim 11 – The Producer uses automatic horizontal scaling
+## Claim 11 — The Producer uses automatic horizontal scaling
 
 A Kubernetes HorizontalPodAutoscaler manages the Producer Deployment.
 
@@ -353,9 +406,19 @@ With CPU utilization around 4%, the HPA automatically reduced the Producer Deplo
 
 This demonstrated automatic scale-down behavior using CPU metrics.
 
+### Limitation
+
+A sustained CPU-load experiment forcing HPA automatic scale-up from one replica to multiple replicas was not performed.
+
+### Status
+
+**Automatic HPA scale-down runtime validated.**
+
+Automatic HPA scale-up was **not demonstrated** and is not claimed.
+
 ---
 
-## Claim 12 – Brute-force-style authentication activity is detected
+## Claim 12 — Brute-force-style authentication activity is detected
 
 The Processor tracks repeated failed login attempts.
 
@@ -373,18 +436,22 @@ POSSIBLE_BRUTE_FORCE
 
 Processor logs showed increasing failed-attempt counters together with successful MongoDB inserts.
 
-Example behavior:
+Example:
 
 ```text
 Received event
 Stored event ... status=POSSIBLE_BRUTE_FORCE
 ```
 
+### Status
+
+**Runtime validated.**
+
 ---
 
-## Claim 13 – Deployment is reproducible
+## Claim 13 — Application deployment is reproducible
 
-The project includes a Makefile for deployment and cleanup.
+The project includes Makefile targets for deployment and cleanup.
 
 Application deployment:
 
@@ -419,7 +486,7 @@ make -C CA2 cluster-down
 
 The `ca2` namespace was deleted and confirmed absent.
 
-The complete application was then recreated using:
+The complete application was recreated using:
 
 ```bash
 make -C CA2 deploy
@@ -436,13 +503,19 @@ Kafka PVC   Bound
 MongoDB PVC Bound
 ```
 
-No manual Pod restart was required during the final validation.
+No manual Processor restart was required during the final validation.
 
 Processor logs subsequently showed new events being consumed and stored in MongoDB.
 
+### Status
+
+**Runtime validated for the deployed version captured in evidence.**
+
+Later Secret-template and Producer init-container refinements were statically validated after cluster teardown.
+
 ---
 
-## Claim 14 – Startup dependencies are handled during deployment
+## Claim 14 — Processor startup dependency is handled explicitly
 
 During development, the Processor could start before Kafka was ready and fail with:
 
@@ -464,41 +537,117 @@ is reachable before the Processor starts.
 
 During the final destroy/redeploy test, the Processor successfully started after Kafka became available without requiring a manual restart.
 
+### Status
+
+**Runtime validated.**
+
+---
+
+## Claim 15 — The final Producer manifest handles Kafka startup ordering
+
+The final Producer Deployment also contains a `wait-for-kafka` init container.
+
+This prevents the Producer application container from starting before Kafka is reachable.
+
+### Validation
+
+The final YAML parsed successfully during static validation.
+
+### Status
+
+**Statically validated only.**
+
+This refinement was added after the EKS cluster had already been torn down and was not rerun against the live environment.
+
+---
+
+## Claim 16 — Repeatable validation helpers are provided
+
+The final repository includes:
+
+```text
+scripts/smoke-test.sh
+scripts/scaling-test.sh
+scripts/evidence.sh
+```
+
+The Makefile exposes:
+
+```text
+make smoke-test
+make scaling-test
+make evidence
+```
+
+### Validation
+
+All helper scripts passed:
+
+```bash
+bash -n
+```
+
+All Makefile targets were checked using:
+
+```bash
+make -n
+```
+
+The evidence helper includes:
+
+```text
+kubectl get all -A
+```
+
+as requested by the assignment.
+
+### Status
+
+**Statically validated.**
+
+The helper scripts were added after the live EKS cluster had been deleted.
+
 ---
 
 # 3. Validation Summary
 
-The following validation activities were completed.
-
-| Validation | Result |
-|---|---|
-| Three EKS worker nodes | PASS |
-| Kafka Pod running | PASS |
-| MongoDB Pod running | PASS |
-| Processor Pod running | PASS |
-| Producer Pod running | PASS |
-| MongoDB PVC Bound | PASS |
-| Kafka PVC Bound | PASS |
-| Kafka actually writing to EBS volume | PASS |
-| MongoDB authentication | PASS |
-| Kafka topic available | PASS |
-| Producer publishes events | PASS |
-| Processor consumes events | PASS |
-| Processor stores events in MongoDB | PASS |
-| REST `/health` endpoint | PASS |
-| Unauthorized MongoDB connection blocked | PASS |
-| Authorized Processor → MongoDB connection | PASS |
-| RBAC allowed action | PASS |
-| RBAC denied action | PASS |
-| Metrics Server CPU/memory metrics | PASS |
-| Producer 1 → 3 replica scaling | PASS |
-| Throughput measurement | PASS |
-| HPA automatic scale-down | PASS |
-| Brute-force classification | PASS |
-| Application destroy | PASS |
-| Automated application redeployment | PASS |
-| Post-redeploy event processing | PASS |
-| Repository secret scan | PASS |
+| Validation | Result | Type |
+|---|---|---|
+| Three EKS worker nodes | PASS | Runtime |
+| Kafka Pod running | PASS | Runtime |
+| MongoDB Pod running | PASS | Runtime |
+| Processor Pod running | PASS | Runtime |
+| Producer Pod running | PASS | Runtime |
+| MongoDB PVC Bound | PASS | Runtime |
+| Kafka PVC Bound | PASS | Runtime |
+| Kafka actively writing to EBS | PASS | Runtime |
+| MongoDB authentication | PASS | Runtime |
+| Kafka topic available | PASS | Runtime |
+| Producer publishes events | PASS | Runtime |
+| Processor consumes events | PASS | Runtime |
+| Processor stores events in MongoDB | PASS | Runtime |
+| REST `/health` endpoint | PASS | Runtime |
+| Unauthorized MongoDB connection blocked | PASS | Runtime |
+| Authorized Processor → MongoDB connection | PASS | Runtime |
+| RBAC allowed action | PASS | Runtime |
+| RBAC denied action | PASS | Runtime |
+| Metrics Server CPU/memory metrics | PASS | Runtime |
+| Producer 1 → 3 replica scaling | PASS | Runtime |
+| Throughput measurement | PASS | Runtime |
+| HPA automatic scale-down | PASS | Runtime |
+| HPA automatic scale-up | NOT TESTED | Documented limitation |
+| Brute-force classification | PASS | Runtime |
+| Application destroy | PASS | Runtime |
+| Automated application redeployment | PASS | Runtime |
+| Post-redeploy event processing | PASS | Runtime |
+| Repository secret scan | PASS | Static |
+| 17 YAML files parsed | PASS | Static |
+| Shell-script syntax validation | PASS | Static |
+| Makefile dry-run targets | PASS | Static |
+| Declarative Secret templates | PASS | Static |
+| Producer wait-for-Kafka refinement | PASS | Static |
+| Evidence helper with `kubectl get all -A` | PASS | Static |
+| Final EKS cluster teardown | PASS | Runtime/AWS |
 
 ---
 
@@ -515,7 +664,7 @@ The following validation activities were completed.
 | `07-network-policy-enforcement.png` | Network isolation validation |
 | `08-rbac-least-privilege.png` | RBAC allowed and denied operations |
 | `09-producer-scaling-throughput.png` | One-replica versus three-replica throughput |
-| `10-hpa-autoscaling.png` | HPA automatic replica adjustment |
+| `10-hpa-autoscaling.png` | HPA automatic scale-down |
 | `11-full-kubernetes-stack.png` | Complete Kubernetes application stack |
 | `12-kafka-persistent-storage.png` | Kafka files stored on EBS-backed storage |
 | `13-brute-force-processing.png` | Repeated failed login detection and persistence |
@@ -531,33 +680,37 @@ The following assumptions were made:
 1. AWS region `us-east-2` is used consistently.
 2. The AWS CLI profile used for deployment is named `ca2`.
 3. Docker is available when application images need to be rebuilt.
-4. The required Producer and Processor images exist in the private ECR repositories before application deployment.
+4. The required Producer and Processor images exist in private ECR repositories before application deployment.
 5. A user running `make deploy` has access to the EKS cluster through `kubectl`.
 6. The user supplies the MongoDB password interactively during deployment.
 7. EKS worker nodes have access to the private ECR repositories.
-8. The EBS CSI driver and required EKS platform components are available on the cluster.
+8. The EBS CSI driver and required EKS platform components are available before application deployment.
+9. The EBS CSI Pod Identity IAM prerequisite is configured by an identity with sufficient IAM permissions.
+10. `envsubst` is installed for rendering the final Secret templates.
 
 ---
 
 # 6. Known Limitations
 
-The following limitations are known:
-
 1. Kafka is deployed as a single broker. This demonstrates Kubernetes orchestration and persistence but does not provide multi-broker Kafka high availability.
 
 2. MongoDB is deployed as a single StatefulSet replica rather than a MongoDB replica set.
 
-3. The Processor REST API uses Flask's development server. It is sufficient for this course validation but would normally be replaced by a production WSGI server for production use.
+3. The Processor REST API uses Flask's development server. It is sufficient for course validation but would normally be replaced by a production WSGI server.
 
-4. Producer throughput measurements were short 30-second experiments. They demonstrate scaling behavior but are not intended to be comprehensive performance benchmarks.
+4. Producer throughput measurements used short 30-second windows. They demonstrate scaling behavior but are not comprehensive performance benchmarks.
 
-5. The HPA demonstration verified automatic scale-down under low CPU. A sustained CPU-load experiment that forces automatic scale-up was not performed.
+5. The HPA demonstration verified automatic scale-down under low CPU. A sustained CPU-load experiment forcing automatic HPA scale-up was not performed.
 
-6. The Producer may restart during early deployment if Kafka is not yet ready. The Processor explicitly handles this dependency through its `wait-for-kafka` init container.
+6. Both Producer and Processor Deployments now include `wait-for-kafka` init containers. The Processor startup fix was validated during the live destroy/redeploy test. The later Producer init-container refinement was statically validated after cluster teardown and was not rerun against the deleted EKS environment.
 
-7. Kubernetes Secrets protect credentials from being committed to Git, but standard Kubernetes Secrets are not encrypted application-level vaults by themselves. Additional production environments could integrate an external secrets manager.
+7. Kubernetes Secrets protect credentials from being committed to Git, but standard Kubernetes Secrets are not equivalent to a dedicated external secrets-management platform.
 
-8. The EKS cluster and some AWS add-on configuration are managed separately from the application manifests. Application deployment is automated through the Makefile, while cluster-level dependencies must exist before `make deploy`.
+8. EBS CSI Pod Identity role creation remains a documented cluster-level IAM prerequisite because the restricted deployment identity did not have unrestricted IAM role-creation permissions.
+
+9. The final declarative Secret-template workflow and helper scripts were added after the live EKS cluster had been deleted. They passed static syntax/YAML checks but were not rerun against the live environment.
+
+10. The original screenshot set does not contain a literal `kubectl get all -A` capture. The final `evidence.sh` helper now includes that exact command for future deployments.
 
 ---
 
@@ -565,25 +718,25 @@ The following limitations are known:
 
 Several implementation issues were identified during testing and corrected.
 
-## EBS CSI IAM permissions
+## EBS CSI IAM Permissions
 
 The EBS CSI controller initially lacked the AWS permissions required to manage EBS volumes.
 
 EKS Pod Identity and the recommended EBS CSI managed policy were configured for the controller.
 
-## MongoDB credential mismatch
+## MongoDB Credential Mismatch
 
 MongoDB authentication initially failed during testing.
 
-The Secret and persistent volume were recreated during development, and the exact Kubernetes Secret value was used to verify successful authentication.
+The Secret and persistent volume were recreated during development, and the exact Kubernetes Secret value was used to verify authentication.
 
-## Special characters in MongoDB password
+## Special Characters in MongoDB Password
 
 A MongoDB password containing URL-sensitive characters caused the Processor MongoDB URI to be invalid.
 
-The secret-creation script was revised to URL-encode credentials before constructing `MONGODB_URI`.
+The secret-creation workflow was revised to URL-encode credentials before constructing `MONGODB_URI`.
 
-## Processor starting before Kafka
+## Processor Starting Before Kafka
 
 The Processor initially encountered:
 
@@ -595,17 +748,25 @@ during fresh deployment.
 
 The Deployment was revised to include a Kafka-wait init container.
 
-## Kafka PVC initially unused
+## Producer Startup Ordering
+
+The original Producer could restart while Kafka was still becoming available.
+
+The final Producer Deployment was updated with the same Kafka-wait pattern.
+
+Because this refinement was added after cluster teardown, it received static rather than live validation.
+
+## Kafka PVC Initially Unused
 
 Kafka initially wrote data to temporary container storage even though a PVC was attached.
 
 `KAFKA_LOG_DIRS` was explicitly configured to use the mounted EBS path.
 
-## Kafka EBS filesystem permissions
+## Kafka EBS Filesystem Permissions
 
 Kafka initially lacked permission to write to the EBS mount.
 
-A Pod security context with:
+A Pod security context using:
 
 ```text
 fsGroup: 1000
@@ -625,7 +786,13 @@ Kafka storage was moved to:
 
 which resolved the issue.
 
-These changes were retained in the final declarative configuration.
+## Secret Declarative Completeness
+
+The original runtime workflow created Secrets imperatively.
+
+The final repository adds declarative Secret template manifests while still keeping actual credentials outside Git.
+
+This refinement was statically validated after the live cluster was removed.
 
 ---
 
@@ -644,83 +811,84 @@ AI was used for:
 - designing NetworkPolicy and RBAC tests;
 - creating the scaling measurement procedure;
 - improving deployment reproducibility;
-- organizing documentation and evidence.
+- organizing documentation and evidence;
+- reviewing the final repository against the assignment rubric.
 
 AI-generated suggestions were not accepted without validation.
 
-Examples of suggestions that were tested and revised include:
+## Examples of AI Guidance That Was Tested and Revised
 
-### EBS CSI configuration
+### EBS CSI Configuration
 
-Initial storage-driver configuration required additional IAM troubleshooting. AWS CLI output and Kubernetes Pod logs were used to identify the missing permissions before the final configuration was accepted.
+Initial storage-driver configuration required additional IAM troubleshooting.
 
-### MongoDB authentication
+AWS CLI output and Kubernetes Pod behavior were used to identify missing permissions before the final configuration was accepted.
 
-Initial assumptions about the authentication failure were revised after inspecting MongoDB logs and testing the exact Kubernetes Secret value.
+### MongoDB Authentication
 
-### Kafka persistence
+Initial assumptions about authentication failures were revised after testing the exact Kubernetes Secret value and MongoDB authentication behavior.
 
-The initial Kafka StatefulSet attached a PVC but Kafka was still writing to temporary storage. Inspection of the mounted volume and Kafka logs identified the problem. The configuration was revised until Kafka files were visibly stored on the EBS-backed path.
+### MongoDB URI Encoding
 
-### Kafka filesystem path
+A password containing URL-sensitive characters produced an invalid MongoDB URI.
 
-The first persistent Kafka log path used the filesystem root and failed because of `lost+found`. Kafka logs were moved into a dedicated subdirectory after validating the failure through Kafka logs.
+The implementation was revised to URL-encode credentials.
 
-### Processor startup
+### Kafka Persistence
 
-The initial Processor deployment could start before Kafka. After reproducing `NoBrokersAvailable`, an init container was added and the complete destroy/redeploy test was repeated.
+The initial Kafka StatefulSet attached a PVC but Kafka was still writing to temporary storage.
 
-### Final acceptance process
+The mounted volume and Kafka logs were inspected, and the configuration was revised until Kafka files were visibly stored on the EBS-backed path.
 
-AI suggestions were accepted only after validation using commands such as:
+### Kafka Filesystem Path
 
-```text
-kubectl get
-kubectl logs
-kubectl exec
+The first persistent Kafka log path used the filesystem root and failed because of `lost+found`.
+
+Kafka logs were moved into a dedicated subdirectory after validating the failure through Kafka logs.
+
+### Processor Startup
+
+The initial Processor deployment could start before Kafka.
+
+After reproducing `NoBrokersAvailable`, an init container was added and the complete destroy/redeploy test was repeated.
+
+### NetworkPolicy
+
+The existence of NetworkPolicy YAML alone was not accepted as evidence.
+
+VPC CNI NetworkPolicy support was enabled and both blocked and allowed traffic paths were tested.
+
+### RBAC
+
+Least-privilege behavior was verified using:
+
+```bash
 kubectl auth can-i
-kubectl top
-curl
-aws eks
-eksctl
 ```
 
-When observed behavior disagreed with an assumption, the configuration was revised and retested.
+rather than inferred only from the manifest.
 
-The final claims in this packet are based on observed command output and captured evidence rather than AI-generated claims alone.
+### Final Repository Refinements
+
+Later AI-assisted recommendations added:
+
+- declarative Secret templates;
+- Producer startup waiting;
+- repeatable smoke-test automation;
+- repeatable scaling-test automation;
+- an evidence-collection helper.
+
+Because the live cluster had already been deleted, these later refinements were statically validated and are explicitly identified as such rather than represented as runtime-tested.
 
 ---
 
-# 9. Final Assessment
+# 9. Official Documentation and AI Guidance Verification
 
-The final CA2 implementation demonstrates the required PaaS orchestration concepts through a functioning Kubernetes deployment on Amazon EKS.
+Generative AI guidance was treated as a starting point rather than an authoritative source.
 
-The project includes:
+Consequential guidance was cross-checked against official Kubernetes and Amazon EKS documentation and validated through observed runtime behavior when the live environment was available.
 
-- declarative Kubernetes application resources;
-- persistent stateful workloads;
-- secure runtime credential injection;
-- network isolation;
-- least-privilege RBAC;
-- metrics collection;
-- manual horizontal scaling with measured results;
-- automatic HPA behavior;
-- a working REST endpoint;
-- end-to-end event processing;
-- automated application deployment and destruction;
-- successful destroy/redeploy validation;
-- documented limitations and engineering revisions.
-
-All major claims in this Integrity Packet are tied to observed validation results or evidence stored in the repository.
----
-
-# 10. Official Documentation and AI Guidance Verification
-
-Generative AI was used as an engineering support and troubleshooting tool during CA2. AI-generated guidance was treated as a starting point rather than as an authoritative source.
-
-Consequential guidance was checked against official platform concepts and then validated through observed runtime behavior before being accepted.
-
-The Kubernetes and AWS topics considered during verification included:
+Relevant topics included:
 
 - StatefulSets
 - PersistentVolumeClaims
@@ -732,7 +900,7 @@ The Kubernetes and AWS topics considered during verification included:
 - ServiceAccounts
 - Roles and RoleBindings
 - Horizontal Pod Autoscaler
-- Resource requests and metrics
+- resource requests and metrics
 - Amazon EKS add-ons
 - AWS EBS CSI driver
 - Amazon EKS Pod Identity
@@ -753,38 +921,9 @@ eksctl
 
 Guidance was revised or rejected when observed behavior did not support it.
 
-Examples include:
-
-1. **EBS CSI permissions**
-   Initial EBS CSI operation failed because the controller lacked the required AWS permissions. IAM and Pod Identity configuration were revised after examining the actual AWS and controller errors.
-
-2. **MongoDB authentication**
-   Authentication assumptions were tested against the Kubernetes Secret and MongoDB itself before the final configuration was accepted.
-
-3. **MongoDB URI encoding**
-   A password containing URL-sensitive characters caused URI validation to fail. The implementation was revised to URL-encode credentials before constructing the Processor connection URI.
-
-4. **Kafka persistence**
-   The first Kafka configuration had a PVC attached but Kafka was still writing to temporary storage. The mounted volume and Kafka logs were inspected, and `KAFKA_LOG_DIRS` was changed so Kafka actively used the EBS-backed volume.
-
-5. **Kafka filesystem layout**
-   Kafka initially failed when the root of the EBS filesystem contained `lost+found`. The Kafka log path was moved to a dedicated subdirectory after the failure was observed in Kafka logs.
-
-6. **Startup ordering**
-   `NoBrokersAvailable` was observed when application containers started before Kafka was ready. Kafka-wait init containers were introduced to make startup ordering explicit.
-
-7. **NetworkPolicy**
-   The presence of NetworkPolicy YAML alone was not treated as proof of isolation. VPC CNI NetworkPolicy support was enabled and both blocked and allowed traffic paths were tested.
-
-8. **RBAC**
-   Least-privilege claims were verified with `kubectl auth can-i` tests rather than inferred from YAML alone.
-
-The final engineering claims in this Integrity Packet are based on observed command output, runtime validation, and captured evidence. AI-generated suggestions were accepted only after verification or revision.
-
-
 ## Official References Reviewed
 
-The final design was cross-checked against official Kubernetes and Amazon EKS documentation covering:
+The final design was cross-checked against official documentation covering:
 
 - Kubernetes StatefulSets: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/
 - Kubernetes Storage: https://kubernetes.io/docs/concepts/storage/
@@ -796,4 +935,103 @@ The final design was cross-checked against official Kubernetes and Amazon EKS do
 - Amazon EKS Pod Identity: https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html
 - Amazon EKS VPC CNI NetworkPolicy: https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html
 
-These official sources were used as the authoritative reference for the Kubernetes and EKS concepts implemented in CA2.
+These official sources were used as authoritative references for the Kubernetes and EKS concepts implemented in CA2.
+
+---
+
+# 10. Static Validation of Final Repository
+
+After the live EKS environment was removed, the final repository refinements were statically audited.
+
+## Shell Scripts
+
+The following scripts passed `bash -n`:
+
+```text
+scripts/create-secrets.sh
+scripts/evidence.sh
+scripts/scaling-test.sh
+scripts/setup-cluster.sh
+scripts/smoke-test.sh
+```
+
+## YAML
+
+Seventeen YAML files were parsed successfully using PyYAML.
+
+This included:
+
+- EKS configuration
+- Namespace
+- Kafka resources
+- MongoDB resources
+- Processor resources
+- Producer resources
+- NetworkPolicy
+- RBAC
+- HPA
+- Secret templates
+
+## Makefile
+
+The following targets were previewed successfully using `make -n`:
+
+```text
+cluster-up
+cluster-setup
+deploy
+smoke-test
+scaling-test
+evidence
+destroy
+cluster-down
+```
+
+## Credential Scan
+
+The repository was scanned for common AWS credential and placeholder-password patterns.
+
+No matching real credentials were found.
+
+## Evidence
+
+All 15 PNG evidence files remained present.
+
+## Git Validation
+
+`git diff --check` returned no whitespace errors before the final commit.
+
+---
+
+# 11. Final Assessment
+
+The CA2 implementation demonstrates the required PaaS orchestration concepts through a functioning Kubernetes deployment on Amazon EKS.
+
+Runtime evidence demonstrates:
+
+- a three-node EKS cluster;
+- Producer → Kafka → Processor → MongoDB processing;
+- a working REST endpoint;
+- Kafka and MongoDB persistent EBS storage;
+- NetworkPolicy enforcement;
+- least-privilege RBAC;
+- Metrics Server observability;
+- horizontal Producer scaling;
+- approximately 3.16x measured throughput improvement;
+- HPA automatic scale-down;
+- brute-force event classification;
+- automated application destruction and redeployment;
+- successful post-redeployment event processing;
+- successful EKS teardown.
+
+The final repository additionally contains statically validated improvements for:
+
+- declarative Secret templates;
+- Producer Kafka startup waiting;
+- repeatable smoke testing;
+- repeatable scaling testing;
+- exact `kubectl get all -A` evidence collection.
+
+The distinction between runtime-tested behavior and later static refinements is documented explicitly so the Integrity Packet does not overstate the evidence.
+
+All major engineering claims are tied to observed validation results, captured evidence, static validation, or clearly documented limitations.
