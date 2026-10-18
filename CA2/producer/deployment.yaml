@@ -5,20 +5,38 @@ metadata:
   namespace: ca2
 spec:
   replicas: 1
+
   selector:
     matchLabels:
       app: producer
+
   template:
     metadata:
       labels:
         app: producer
+
     spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z kafka 9092; do
+                echo "Waiting for Kafka..."
+                sleep 3
+              done
+              echo "Kafka is ready."
+
       containers:
         - name: producer
           image: 913210542757.dkr.ecr.us-east-2.amazonaws.com/ca2-producer:v2
+
           envFrom:
             - configMapRef:
                 name: producer-config
+
           resources:
             requests:
               cpu: "50m"

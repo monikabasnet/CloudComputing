@@ -712,3 +712,88 @@ The project includes:
 - documented limitations and engineering revisions.
 
 All major claims in this Integrity Packet are tied to observed validation results or evidence stored in the repository.
+---
+
+# 10. Official Documentation and AI Guidance Verification
+
+Generative AI was used as an engineering support and troubleshooting tool during CA2. AI-generated guidance was treated as a starting point rather than as an authoritative source.
+
+Consequential guidance was checked against official platform concepts and then validated through observed runtime behavior before being accepted.
+
+The Kubernetes and AWS topics considered during verification included:
+
+- StatefulSets
+- PersistentVolumeClaims
+- StorageClasses
+- Services
+- ConfigMaps
+- Secrets
+- NetworkPolicy
+- ServiceAccounts
+- Roles and RoleBindings
+- Horizontal Pod Autoscaler
+- Resource requests and metrics
+- Amazon EKS add-ons
+- AWS EBS CSI driver
+- Amazon EKS Pod Identity
+- Amazon VPC CNI NetworkPolicy support
+
+AI-assisted recommendations were tested using commands and evidence such as:
+
+```text
+kubectl get
+kubectl logs
+kubectl exec
+kubectl auth can-i
+kubectl top
+curl
+aws eks
+eksctl
+```
+
+Guidance was revised or rejected when observed behavior did not support it.
+
+Examples include:
+
+1. **EBS CSI permissions**
+   Initial EBS CSI operation failed because the controller lacked the required AWS permissions. IAM and Pod Identity configuration were revised after examining the actual AWS and controller errors.
+
+2. **MongoDB authentication**
+   Authentication assumptions were tested against the Kubernetes Secret and MongoDB itself before the final configuration was accepted.
+
+3. **MongoDB URI encoding**
+   A password containing URL-sensitive characters caused URI validation to fail. The implementation was revised to URL-encode credentials before constructing the Processor connection URI.
+
+4. **Kafka persistence**
+   The first Kafka configuration had a PVC attached but Kafka was still writing to temporary storage. The mounted volume and Kafka logs were inspected, and `KAFKA_LOG_DIRS` was changed so Kafka actively used the EBS-backed volume.
+
+5. **Kafka filesystem layout**
+   Kafka initially failed when the root of the EBS filesystem contained `lost+found`. The Kafka log path was moved to a dedicated subdirectory after the failure was observed in Kafka logs.
+
+6. **Startup ordering**
+   `NoBrokersAvailable` was observed when application containers started before Kafka was ready. Kafka-wait init containers were introduced to make startup ordering explicit.
+
+7. **NetworkPolicy**
+   The presence of NetworkPolicy YAML alone was not treated as proof of isolation. VPC CNI NetworkPolicy support was enabled and both blocked and allowed traffic paths were tested.
+
+8. **RBAC**
+   Least-privilege claims were verified with `kubectl auth can-i` tests rather than inferred from YAML alone.
+
+The final engineering claims in this Integrity Packet are based on observed command output, runtime validation, and captured evidence. AI-generated suggestions were accepted only after verification or revision.
+
+
+## Official References Reviewed
+
+The final design was cross-checked against official Kubernetes and Amazon EKS documentation covering:
+
+- Kubernetes StatefulSets: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/
+- Kubernetes Storage: https://kubernetes.io/docs/concepts/storage/
+- Kubernetes Configuration, ConfigMaps, and Secrets: https://kubernetes.io/docs/concepts/configuration/
+- Kubernetes Services and NetworkPolicy: https://kubernetes.io/docs/concepts/services-networking/
+- Kubernetes RBAC: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+- Kubernetes application scaling and HPA: https://kubernetes.io/docs/tasks/run-application/
+- Amazon EKS EBS CSI driver: https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html
+- Amazon EKS Pod Identity: https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html
+- Amazon EKS VPC CNI NetworkPolicy: https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html
+
+These official sources were used as the authoritative reference for the Kubernetes and EKS concepts implemented in CA2.

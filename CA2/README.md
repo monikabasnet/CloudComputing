@@ -1237,3 +1237,297 @@ Producers → Pub/Sub Hub → Processor → Database/Analytics
 ```
 
 while adding Kubernetes orchestration, persistence, security isolation, observability, scaling, and reproducible deployment.
+---
+
+# 37. Prerequisites
+
+Before deploying CA2, the following tools and access are required:
+
+- AWS CLI configured with the `ca2` profile
+- `eksctl`
+- `kubectl`
+- Docker Desktop / Docker Engine
+- Docker Buildx
+- GNU Make
+- Python 3
+- `envsubst` from GNU gettext
+- Access to the AWS account used for Amazon EKS and Amazon ECR
+- Permission to pull the private Producer and Processor images from Amazon ECR
+- A valid Kubernetes context after the EKS cluster is created
+
+Important versions used during CA2:
+
+| Component | Version |
+|---|---|
+| Amazon EKS / Kubernetes | 1.34 |
+| Apache Kafka | 4.3.1 |
+| MongoDB | 8.0.29 |
+| Python container base | 3.12 |
+
+Tool versions can be checked with:
+
+```bash
+aws --version
+eksctl version
+kubectl version --client
+docker --version
+```
+
+Verify the Kubernetes context after cluster creation:
+
+```bash
+kubectl config current-context
+kubectl get nodes
+```
+
+The EBS CSI Pod Identity IAM prerequisite documented earlier in this README must also be available before EBS volumes can be dynamically provisioned.
+
+
+---
+
+# 38. Reproducible Validation and Test Commands
+
+CA2 provides Makefile targets for repeatable smoke testing, scaling measurement, and evidence collection.
+
+## Smoke Test
+
+Run:
+
+```bash
+make -C CA2 smoke-test
+```
+
+The smoke-test workflow checks:
+
+1. Application Pods and PVCs.
+2. The Kafka `auth-events` topic.
+3. Producer output.
+4. Processor output.
+5. MongoDB record count.
+6. Instructions for testing the Processor REST endpoint.
+
+For the REST test, run in Terminal 1:
+
+```bash
+kubectl port-forward -n ca2 service/processor 8080:8080
+```
+
+Then run in Terminal 2:
+
+```bash
+curl http://localhost:8080/health
+```
+
+Expected healthy response:
+
+```json
+{"kafka_topic":"auth-events","mongodb":"connected","status":"ok"}
+```
+
+## Scaling Test
+
+Run:
+
+```bash
+make -C CA2 scaling-test
+```
+
+The repeatable scaling test:
+
+1. Scales the Producer to 1 replica.
+2. Measures processed events during a 30-second window.
+3. Scales the Producer to 3 replicas.
+4. Measures another 30-second window.
+5. Reports the number of events and calculated events per second.
+
+The validated CA2 experiment produced:
+
+| Producer Replicas | Events / 30 sec | Approx. Events/sec |
+|---:|---:|---:|
+| 1 | 31 | 1.03 |
+| 3 | 98 | 3.27 |
+
+Observed throughput improvement: approximately **3.16x**.
+
+Scaling evidence:
+
+[Scaling throughput evidence](evidence/09-producer-scaling-throughput.png)
+
+## Evidence Collection
+
+Run:
+
+```bash
+make -C CA2 evidence
+```
+
+The evidence target collects:
+
+- `kubectl get all -A`
+- CA2 PersistentVolumeClaims
+- NetworkPolicies
+- RBAC resources
+- HPA status
+- Pod CPU and memory metrics
+
+This provides a repeatable final-state evidence collection procedure.
+
+## Logs and Results
+
+Producer logs:
+
+```bash
+kubectl logs -n ca2 deployment/producer -c producer --tail=20
+```
+
+Processor logs:
+
+```bash
+kubectl logs -n ca2 deployment/processor -c processor --tail=20
+```
+
+Kafka logs:
+
+```bash
+kubectl logs -n ca2 kafka-0 --tail=20
+```
+
+MongoDB logs:
+
+```bash
+kubectl logs -n ca2 mongodb-0 --tail=20
+```
+
+Resource metrics:
+
+```bash
+kubectl top pods -n ca2
+```
+
+HPA status:
+
+```bash
+kubectl get hpa -n ca2
+```
+
+Persistent storage:
+
+```bash
+kubectl get pvc -n ca2
+```
+
+Captured screenshots and validated results are stored in:
+
+[`evidence/`](evidence/)
+
+Engineering claims and their supporting evidence are mapped in:
+
+[**IntegrityPacket.md**](IntegrityPacket.md)
+
+
+---
+
+# 39. Deviations from CA0/CA1
+
+CA2 preserves the original logical application pipeline:
+
+```text
+Producer → Kafka → Processor → MongoDB
+```
+
+The application behavior remains consistent with CA0/CA1, but the deployment model was changed to satisfy Kubernetes orchestration requirements.
+
+## Producer
+
+The CA0 Producer operated as a one-shot workload. For CA2, the Producer was adapted to run continuously as a Kubernetes Deployment.
+
+This change allows:
+
+- multiple Producer replicas;
+- horizontal scaling;
+- HPA integration;
+- repeatable throughput measurement.
+
+## Kafka
+
+Kafka was migrated to a Kubernetes StatefulSet using KRaft mode.
+
+Persistent AWS EBS storage was added so Kafka data survives container recreation.
+
+Kafka uses an internal Kubernetes Service for stable service discovery.
+
+## MongoDB
+
+MongoDB was migrated to a Kubernetes StatefulSet.
+
+Database files are stored on an EBS-backed PersistentVolumeClaim instead of relying on temporary container storage.
+
+## Processor
+
+The Processor was migrated to a Kubernetes Deployment and exposed internally through a ClusterIP Service on port 8080.
+
+A `wait-for-kafka` init container was added to prevent the Processor from starting before Kafka is reachable.
+
+## Configuration
+
+Non-sensitive application settings were moved to Kubernetes ConfigMaps.
+
+This separates application configuration from container images.
+
+## Secrets
+
+Credentials are represented using declarative Kubernetes Secret templates.
+
+Actual secret values are supplied interactively during deployment and rendered into the Secret resources at runtime so plaintext credentials are not committed to Git.
+
+## Container Registry
+
+The custom Producer and Processor images are stored in private Amazon ECR repositories.
+
+Images were built for `linux/amd64` to match the EKS worker-node architecture.
+
+## Networking
+
+Kubernetes Services provide stable internal DNS names:
+
+```text
+kafka
+mongodb
+processor
+```
+
+NetworkPolicies were added to restrict access to Kafka and MongoDB.
+
+## Access Control
+
+Kubernetes RBAC and a dedicated `processor-sa` ServiceAccount were introduced to demonstrate least-privilege workload authorization.
+
+## Scaling and Observability
+
+CA2 adds:
+
+- Kubernetes Metrics Server;
+- CPU and memory metrics;
+- resource requests and limits;
+- Horizontal Pod Autoscaler;
+- manual 1-to-3 replica scaling;
+- measured throughput comparison;
+- repeatable scaling-test automation.
+
+## Deployment Automation
+
+CA2 adds Makefile targets and supporting scripts for:
+
+```text
+cluster creation
+cluster platform setup
+application deployment
+application status
+smoke testing
+scaling testing
+evidence collection
+application destruction
+cluster destruction
+```
+
+These changes preserve the CA0/CA1 logical pipeline while adapting the implementation to Kubernetes and the CA2 PaaS orchestration requirements.

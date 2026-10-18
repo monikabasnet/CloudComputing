@@ -1,3 +1,5 @@
+.PHONY: cluster-up cluster-setup cluster-down cluster-status deploy status destroy smoke-test scaling-test evidence
+
 AWS_PROFILE ?= ca2
 CLUSTER_CONFIG := eks/cluster.yaml
 
@@ -39,3 +41,11 @@ status:
 
 destroy:
 	kubectl delete namespace ca2 --ignore-not-found
+smoke-test:
+	./scripts/smoke-test.sh
+
+scaling-test:
+	./scripts/scaling-test.sh
+
+evidence:
+	./scripts/evidence.sh

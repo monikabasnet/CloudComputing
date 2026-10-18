@@ -1,25 +1,22 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-read -s -p "Enter MongoDB password: " MONGO_PASS
+read -s -p "Enter MongoDB password: " MONGO_PASSWORD
 echo
 
 MONGO_USER="ca2admin"
 
-kubectl create secret generic mongodb-secret \
-  -n ca2 \
-  --from-literal=MONGO_INITDB_ROOT_USERNAME="$MONGO_USER" \
-  --from-literal=MONGO_INITDB_ROOT_PASSWORD="$MONGO_PASS" \
-  --dry-run=client -o yaml | kubectl apply -f -
-
 ENCODED_USER="$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote_plus(sys.argv[1]))' "$MONGO_USER")"
-ENCODED_PASS="$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote_plus(sys.argv[1]))' "$MONGO_PASS")"
+ENCODED_PASS="$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote_plus(sys.argv[1]))' "$MONGO_PASSWORD")"
 
-kubectl create secret generic processor-secret \
-  -n ca2 \
-  --from-literal=MONGODB_URI="mongodb://${ENCODED_USER}:${ENCODED_PASS}@mongodb:27017/?authSource=admin" \
-  --dry-run=client -o yaml | kubectl apply -f -
+MONGODB_URI="mongodb://${ENCODED_USER}:${ENCODED_PASS}@mongodb:27017/?authSource=admin"
 
-unset MONGO_PASS ENCODED_USER ENCODED_PASS
+export MONGO_PASSWORD
+export MONGODB_URI
 
-echo "CA2 Kubernetes Secrets created."
+envsubst < mongodb/secret.template.yaml | kubectl apply -f -
+envsubst < processor/secret.template.yaml | kubectl apply -f -
+
+unset MONGO_PASSWORD MONGODB_URI ENCODED_USER ENCODED_PASS
+
+echo "CA2 Kubernetes Secrets applied from declarative templates."
