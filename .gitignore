@@ -24,3 +24,7 @@ CA3/**/*.pyc
 
 # Temporary CA3 review files
 CA3-review/
+
+# Temporary CA3 patch review directories
+CA3-fix/
+CA3-next-review/

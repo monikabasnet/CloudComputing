@@ -94,7 +94,13 @@ spec:
         - name: kafka-client-ca
           mountPath: /etc/kafka-ca
           readOnly: true
+        - name: mongodb-ca
+          mountPath: /etc/mongodb-ca
+          readOnly: true
       volumes:
       - name: kafka-client-ca
         secret:
           secretName: kafka-client-ca
+      - name: mongodb-ca
+        secret:
+          secretName: mongodb-client-ca
