@@ -1,0 +1,17 @@
+[req]
+distinguished_name = dn
+req_extensions = v3_req
+prompt = no
+
+[dn]
+CN = mongodb
+
+[v3_req]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = mongodb
+DNS.2 = mongodb.ca2
+DNS.3 = mongodb.ca2.svc
+DNS.4 = mongodb.ca2.svc.cluster.local
+DNS.5 = mongodb-0.mongodb.ca2.svc.cluster.local
