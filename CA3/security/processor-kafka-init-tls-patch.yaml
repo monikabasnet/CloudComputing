@@ -1,0 +1,14 @@
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: wait-for-kafka
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z kafka 9094; do
+                echo "Waiting for Kafka TLS port..."
+                sleep 3
+              done
+              echo "Kafka TLS port is reachable."

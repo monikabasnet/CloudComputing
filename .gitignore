@@ -1,0 +1,26 @@
+
+# CA3 TLS private keys and certificates
+CA3/security/tls/
+
+# CA3 database backups and cluster snapshots
+CA3/security/backups/
+
+# CA3 private backups and credentials
+CA3/security/backups/
+CA3/**/*.pem
+CA3/**/*.key
+CA3/**/*.crt
+CA3/**/*.p12
+CA3/**/*.pfx
+CA3/**/__pycache__/
+CA3/**/*.pyc
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.tfstate
+*.tfstate.*
+
+# Temporary CA3 review files
+CA3-review/

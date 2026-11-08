@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: processor-metrics
+  namespace: ca2
+  labels:
+    release: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - ca2
+  selector:
+    matchLabels:
+      app: processor
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s

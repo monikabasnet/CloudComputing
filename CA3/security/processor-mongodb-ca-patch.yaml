@@ -1,0 +1,13 @@
+spec:
+  template:
+    spec:
+      containers:
+        - name: processor
+          volumeMounts:
+            - name: mongodb-ca
+              mountPath: /etc/mongodb-ca
+              readOnly: true
+      volumes:
+        - name: mongodb-ca
+          secret:
+            secretName: mongodb-client-ca

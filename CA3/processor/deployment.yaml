@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: processor
+  namespace: ca2
+  labels:
+    app: processor
+    version: ca3
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: processor
+  template:
+    metadata:
+      labels:
+        app: processor
+        version: ca3
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/path: /metrics
+        prometheus.io/port: '8080'
+    spec:
+      serviceAccountName: processor-sa
+      automountServiceAccountToken: false
+      initContainers:
+      - name: wait-for-kafka
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - "until nc -z kafka 9094; do\n  echo \"Waiting for Kafka TLS port...\"\n\
+          \  sleep 3\ndone\necho \"Kafka TLS port is reachable.\"\n"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+      containers:
+      - name: processor
+        image: 913210542757.dkr.ecr.us-east-2.amazonaws.com/ca2-processor:ca3-kafka-tls-v1
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: processor-config
+        - secretRef:
+            name: processor-secret
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 150m
+            memory: 256Mi
+          limits:
+            cpu: 750m
+            memory: 512Mi
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: http
+          initialDelaySeconds: 20
+          periodSeconds: 20
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 10001
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        env:
+        - name: KAFKA_BROKER
+          value: kafka-0.kafka.ca2.svc.cluster.local:9094
+        - name: KAFKA_SECURITY_PROTOCOL
+          value: SSL
+        - name: KAFKA_SSL_CA_FILE
+          value: /etc/kafka-ca/ca.crt
+        volumeMounts:
+        - name: kafka-client-ca
+          mountPath: /etc/kafka-ca
+          readOnly: true
+      volumes:
+      - name: kafka-client-ca
+        secret:
+          secretName: kafka-client-ca

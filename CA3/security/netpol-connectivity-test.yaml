@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: netpol-server
+  namespace: ca3-netpol-test
+  labels:
+    app: netpol-server
+spec:
+  containers:
+    - name: server
+      image: 913210542757.dkr.ecr.us-east-2.amazonaws.com/ca2-processor:ca3-v1
+      command:
+        - python
+        - -m
+        - http.server
+        - "8080"
+      ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: netpol-client
+  namespace: ca3-netpol-test
+  labels:
+    app: netpol-client
+spec:
+  containers:
+    - name: client
+      image: 913210542757.dkr.ecr.us-east-2.amazonaws.com/ca2-processor:ca3-v1
+      command:
+        - python
+        - -c
+        - |
+          import time
+          while True:
+              time.sleep(60)

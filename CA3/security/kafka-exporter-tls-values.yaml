@@ -1,0 +1,12 @@
+kafkaServer:
+  - kafka-0.kafka.ca2.svc.cluster.local:9094
+
+tls:
+  enabled: true
+  insecureSkipVerify: false
+  serverName: kafka-0.kafka.ca2.svc.cluster.local
+  mountPath: /secret/certs
+  secretName: kafka-exporter-ca
+  caFile: ca.crt
+  certFile: ""
+  keyFile: ""

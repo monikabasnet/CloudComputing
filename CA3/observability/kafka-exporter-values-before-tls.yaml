@@ -1,0 +1,37 @@
+replicaCount: 1
+
+kafkaServer:
+  - kafka-0.kafka.ca2.svc.cluster.local:9092
+
+kafkaLabels:
+  cluster: ca3-eks-cluster
+
+verbosity: 0
+
+rbac:
+  create: true
+
+serviceAccount:
+  create: true
+
+prometheus:
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    interval: "15s"
+    additionalLabels:
+      release: monitoring
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  seccompProfile:
+    type: RuntimeDefault

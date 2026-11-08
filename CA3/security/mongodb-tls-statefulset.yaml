@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  namespace: ca2
+spec:
+  serviceName: mongodb
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: mongodb
+
+  template:
+    metadata:
+      labels:
+        app: mongodb
+
+    spec:
+      initContainers:
+        - name: prepare-tls
+          image: mongo:8.0.29
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              cp /tls-source/mongodb.pem /tls-ready/mongodb.pem
+              cp /tls-source/ca.crt /tls-ready/ca.crt
+
+              chown 999:999 /tls-ready/mongodb.pem
+              chown 999:999 /tls-ready/ca.crt
+
+              chmod 600 /tls-ready/mongodb.pem
+              chmod 644 /tls-ready/ca.crt
+
+              echo "MongoDB TLS certificates prepared"
+
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - FOWNER
+
+          volumeMounts:
+            - name: mongodb-tls-source
+              mountPath: /tls-source
+              readOnly: true
+
+            - name: mongodb-tls-ready
+              mountPath: /tls-ready
+
+      containers:
+        - name: mongodb
+          image: mongo:8.0.29
+
+          args:
+            - "--auth"
+            - "--bind_ip_all"
+            - "--tlsMode"
+            - "requireTLS"
+            - "--tlsCertificateKeyFile"
+            - "/etc/mongodb-tls/mongodb.pem"
+            - "--tlsCAFile"
+            - "/etc/mongodb-tls/ca.crt"
+            - "--tlsAllowConnectionsWithoutCertificates"
+
+          ports:
+            - containerPort: 27017
+              name: mongodb
+
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: MONGO_INITDB_ROOT_USERNAME
+
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: MONGO_INITDB_ROOT_PASSWORD
+
+          volumeMounts:
+            - name: mongodb-data
+              mountPath: /data/db
+
+            - name: mongodb-tls-ready
+              mountPath: /etc/mongodb-tls
+              readOnly: true
+
+      volumes:
+        - name: mongodb-tls-source
+          secret:
+            secretName: mongodb-server-tls
+            defaultMode: 0440
+
+        - name: mongodb-tls-ready
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Mi
+
+  volumeClaimTemplates:
+    - metadata:
+        name: mongodb-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: ca2-gp3
+        resources:
+          requests:
+            storage: 5Gi

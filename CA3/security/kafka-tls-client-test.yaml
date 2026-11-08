@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kafka-tls-client-test
+  namespace: ca2
+  labels:
+    app: kafka-tls-test
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  containers:
+    - name: test
+      image: apache/kafka:4.3.1
+      command:
+        - /bin/sh
+        - -c
+        - |
+          sleep 3600
+      volumeMounts:
+        - name: kafka-ca
+          mountPath: /etc/kafka-ca
+          readOnly: true
+  volumes:
+    - name: kafka-ca
+      secret:
+        secretName: kafka-client-ca

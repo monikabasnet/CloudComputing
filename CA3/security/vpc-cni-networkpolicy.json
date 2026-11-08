@@ -1,0 +1,6 @@
+{
+  "enableNetworkPolicy": "true",
+  "env": {
+    "NETWORK_POLICY_ENFORCING_MODE": "standard"
+  }
+}

@@ -1,0 +1,21 @@
+spec:
+  template:
+    spec:
+      containers:
+        - name: processor
+          image: 913210542757.dkr.ecr.us-east-2.amazonaws.com/ca2-processor:ca3-kafka-tls-v1
+          env:
+            - name: KAFKA_BROKER
+              value: "kafka-0.kafka.ca2.svc.cluster.local:9094"
+            - name: KAFKA_SECURITY_PROTOCOL
+              value: "SSL"
+            - name: KAFKA_SSL_CA_FILE
+              value: "/etc/kafka-ca/ca.crt"
+          volumeMounts:
+            - name: kafka-client-ca
+              mountPath: /etc/kafka-ca
+              readOnly: true
+      volumes:
+        - name: kafka-client-ca
+          secret:
+            secretName: kafka-client-ca
